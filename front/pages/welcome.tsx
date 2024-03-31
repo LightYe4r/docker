@@ -15,7 +15,7 @@ export default function Welcome() {
     setUsername(storedUsername || "");
   }, []);
 
-  const onChange = (newDate) => {
+  const onChange = (newDate: Date) => {
     setDate(newDate);
   };
 
@@ -36,8 +36,8 @@ export default function Welcome() {
     }));
   };
 
-  const isSignedIn = signInTimes[date.toDateString()];
-  const isSignedOut = signOutTimes[date.toDateString()];
+  const isSignedIn = signInTimes[date.toDateString()] !== undefined;
+  const isSignedOut = signOutTimes[date.toDateString()] !== undefined;
 
   return (
     <div
