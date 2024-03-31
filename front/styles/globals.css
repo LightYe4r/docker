@@ -1,0 +1,31 @@
+html,
+body {
+  padding: 0;
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen,
+    Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.calendar {
+  width: 300px; /* 원하는 크기로 조정하세요 */
+  max-width: 100%; /* 최대 너비 설정 */
+}
+
+@media (prefers-color-scheme: dark) {
+  html {
+    color-scheme: white;
+  }
+  body {
+    color: black;
+    background: white;
+  }
+}
