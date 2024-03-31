@@ -1,6 +1,6 @@
 db/db/*
 db/*.sql
 db/*.py
-db/*.sh
 !db/run.sh
+db/*.sh
 db/*.yaml
