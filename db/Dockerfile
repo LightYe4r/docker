@@ -34,11 +34,13 @@ ENV MYSQL_USER=docker \
         MYSQL_ROOT_PASSWORD=docker \
         TZ=Asia/Seoul
 
+COPY ./initdb.d /docker-entrypoint-initdb.d
+COPY ./conf.d /etc/mysql/conf.d
+
 EXPOSE 3306
 
 VOLUME ./db:/var/lib/mysql \
-        /etc/localtime:/etc/localtime:ro \
-        ./initdb.d:/docker-entrypoint-initdb.d \
-        ./conf.d:/etc/mysql/conf.d
+        /etc/localtime:/etc/localtime:ro
 
 CMD ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
+
