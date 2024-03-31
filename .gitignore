@@ -1,0 +1,5 @@
+db/db/*
+db/*.sql
+db/*.py
+db/*.sh
+db/*.yaml
