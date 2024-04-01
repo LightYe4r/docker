@@ -15,3 +15,7 @@ python app.py
 
 ## 가상 환경 종료
 deactivate
+
+## 도커파일 실행
+docker build -t my-flask-app .
+docker run -d -p 5000:5000 my-flask-app
