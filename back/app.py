@@ -18,7 +18,7 @@ app.config['MYSQL_USER'] = MYSQL_USER
 app.config['MYSQL_PASSWORD'] = MYSQL_PASSWORD
 app.config['MYSQL_DB'] = MYSQL_DATABASE
 
-pymysql.init_app(app) 
+# pymysql.init_app(app) 
 
 db = pymysql.connect(host='192.168.56.101',
                         user='root',
