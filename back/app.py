@@ -2,17 +2,23 @@ from flask import Flask, request, session, jsonify
 from datetime import datetime
 import pymysql.cursors
 from flask_cors import CORS
+import os
 
 app = Flask(__name__)
 CORS(app)
 
 app.secret_key = '34c9fff6c54c731441fddb33548aee32c0ec8faaf7e38563'
-db = pymysql.connect(host='127.0.0.1',
-                       user='root',
-                       password='root',
-                       db='acs_db',
-                       charset='utf8',
-                       cursorclass=pymysql.cursors.DictCursor)
+
+MYSQL_USER = os.environ.get('MYSQL_USER')
+MYSQL_PASSWORD = os.environ.get('MYSQL_PASSWORD')
+MYSQL_DATABASE = os.environ.get('MYSQL_DATABASE')
+
+# MySQL 연결
+app.config['MYSQL_USER'] = MYSQL_USER
+app.config['MYSQL_PASSWORD'] = MYSQL_PASSWORD
+app.config['MYSQL_DB'] = MYSQL_DATABASE
+
+pymysql.init_app(app) 
 
 @app.route('/')
 def home():

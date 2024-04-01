@@ -2,9 +2,9 @@
 python -m venv venv
 
 ## 가상 환경 활성화
-.\venv\Scripts\activate -> (venv)
+.\venv\Scripts\activate -> (venv) 진입으로 확인
 
-## 패키지 설치
+## 먼저 패키지 설치
 pip install -r requirements.txt
 
 ## 새로 패키지 설치 시 실행
@@ -17,5 +17,5 @@ python app.py
 deactivate
 
 ## 도커파일 실행
-docker build -t my-flask-app .
-docker run -d -p 5000:5000 my-flask-app
+docker build -t myflask .
+docker run -d -p 5000:5000 myflask
