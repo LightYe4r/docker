@@ -5,7 +5,7 @@ create table users (
 );
 
 create table attendance (
-   id int primary key,
+   id int auto_increment primary key,
    date DATE not null,
    start_time datetime default null,
    end_time datetime default null,
