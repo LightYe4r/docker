@@ -20,10 +20,10 @@ app.config['MYSQL_DB'] = MYSQL_DATABASE
 
 pymysql.init_app(app) 
 
-db = pymysql.connect(host=app.config['MYSQL_HOST'],
-                        user=app.config['MYSQL_USER'],
-                        password=app.config['MYSQL_PASSWORD'],
-                        db=app.config['MYSQL_DB'],
+db = pymysql.connect(host='192.168.56.101',
+                        user='root',
+                        password='docker',
+                        db='docker',
                         cursorclass=pymysql.cursors.DictCursor)
 
 @app.route('/')
