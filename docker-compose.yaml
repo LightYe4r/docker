@@ -47,10 +47,9 @@ services:
       - PORT=8000
 
   back-proxy:
-    image: nginx:1.25.4-alpine
-    volumes:
-      - ./build/back-proxy.conf:/etc/nginx/nginx.conf
-    command: ["nginx", "-g", "daemon off;"]
+    build:
+      context: .
+      dockerfile: build/Dockerfile-b-proxy
     networks:
       - back
       - front
