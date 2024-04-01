@@ -1,10 +1,12 @@
 from flask import Flask, request, session, jsonify
 from datetime import datetime
 import pymysql.cursors
+from flask_cors import CORS
 
 app = Flask(__name__)
-app.secret_key = '34c9fff6c54c731441fddb33548aee32c0ec8faaf7e38563'
+CORS(app)
 
+app.secret_key = '34c9fff6c54c731441fddb33548aee32c0ec8faaf7e38563'
 db = pymysql.connect(host='127.0.0.1',
                        user='root',
                        password='root',
