@@ -13,12 +13,18 @@ MYSQL_USER = os.environ.get('MYSQL_USER')
 MYSQL_PASSWORD = os.environ.get('MYSQL_PASSWORD')
 MYSQL_DATABASE = os.environ.get('MYSQL_DATABASE')
 
-# MySQL 연결
+# MySQL 연결 설정
 app.config['MYSQL_USER'] = MYSQL_USER
 app.config['MYSQL_PASSWORD'] = MYSQL_PASSWORD
 app.config['MYSQL_DB'] = MYSQL_DATABASE
 
 pymysql.init_app(app) 
+
+db = pymysql.connect(host=app.config['MYSQL_HOST'],
+                        user=app.config['MYSQL_USER'],
+                        password=app.config['MYSQL_PASSWORD'],
+                        db=app.config['MYSQL_DB'],
+                        cursorclass=pymysql.cursors.DictCursor)
 
 @app.route('/')
 def home():
