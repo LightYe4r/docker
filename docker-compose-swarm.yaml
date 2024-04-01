@@ -47,9 +47,10 @@ services:
       - PORT=8000
 
   back-proxy:
-    build:
-      context: .
-      dockerfile: build/Dockerfile-b-proxy
+    # build:
+    #   context: .
+    #   dockerfile: build/Dockerfile-b-proxy
+    image: manji955/project-back-proxy:1.0
     networks:
       - back
       - front
