@@ -5,18 +5,25 @@ from flask_cors import CORS
 import os
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "*"}},
+     headers={
+         'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE',
+         'Access-Control-Allow-Headers': 'Origin, Accept, Content-Type, X-Requested-With, Authorization, Access-Control-Request-Method, Access-Control-Request-Headers',
+         'Access-Control-Max-Age': '60',
+         'Access-Control-Allow-Credentials': 'true',
+         'Access-Control-Expose-Headers': 'Content-Length'
+     })
 
 app.secret_key = '34c9fff6c54c731441fddb33548aee32c0ec8faaf7e38563'
 
-MYSQL_USER = os.environ.get('MYSQL_USER')
-MYSQL_PASSWORD = os.environ.get('MYSQL_PASSWORD')
-MYSQL_DATABASE = os.environ.get('MYSQL_DATABASE')
+# MYSQL_USER = os.environ.get('MYSQL_USER')
+# MYSQL_PASSWORD = os.environ.get('MYSQL_PASSWORD')
+# MYSQL_DATABASE = os.environ.get('MYSQL_DATABASE')
 
-# MySQL 연결 설정
-app.config['MYSQL_USER'] = MYSQL_USER
-app.config['MYSQL_PASSWORD'] = MYSQL_PASSWORD
-app.config['MYSQL_DB'] = MYSQL_DATABASE
+# # MySQL 연결 설정
+# app.config['MYSQL_USER'] = MYSQL_USER
+# app.config['MYSQL_PASSWORD'] = MYSQL_PASSWORD
+# app.config['MYSQL_DB'] = MYSQL_DATABASE
 
 # pymysql.init_app(app) 
 
