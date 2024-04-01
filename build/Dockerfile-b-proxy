@@ -1,4 +1,2 @@
-FROM ubuntu
-RUN apt update -y && apt upgrade -y && apt install haproxy -y
-COPY build/haproxy.cfg /etc/haproxy/haproxy.cfg
-CMD ["haproxy", "-f", "/etc/haproxy/haproxy.cfg", "-d"]
+FROM ubuntu:14.04
+RUN apt update -y && apt upgrade -y && apt install keepalived haproxy -y

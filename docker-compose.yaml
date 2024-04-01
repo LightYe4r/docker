@@ -58,7 +58,10 @@ services:
     restart: always
     depends_on:
       - backend
-
+    volumes:
+      - ./build/haproxy.cfg:/etc/haproxy/haproxy.cfg
+      - ./build/keepalived.conf:/etc/keepalived/keepalived.conf
+    command: ["sh", "-c", "haproxy -f /etc/haproxy/haproxy.cfg -d && keepalived -f /etc/keepalived/keepalived.conf -d"]
   backend:
     # build:
     #   context: .
