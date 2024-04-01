@@ -105,10 +105,31 @@ def get_attendance():
             with db.cursor() as cursor:
                 sql = """
                     SELECT 
-                        SUM(start_time > CAST(CONCAT(date, ' 09:10:00') AS DATETIME)) AS 지각,
-                        SUM(start_time <= CAST(CONCAT(date, ' 09:10:00') AS DATETIME) AND end_time < CAST(CONCAT(date, ' 17:50:00') AS DATETIME)) AS 조퇴,
-                        SUM(start_time <= CAST(CONCAT(date, ' 09:10:00') AS DATETIME) AND end_time >= CAST(CONCAT(date, ' 17:50:00') AS DATETIME)) AS 출석,
-                        SUM(start_time IS NULL OR end_time IS NULL OR TIMESTAMPDIFF(MINUTE, start_time, end_time) < 240) AS 결석
+                        SUM(CASE
+                                WHEN start_time IS NULL OR end_time IS NULL OR TIMESTAMPDIFF(MINUTE, start_time, end_time) < 240 THEN 0 
+                                ELSE CASE
+                                        WHEN start_time > CAST(CONCAT(date, ' 09:10:00') AS DATETIME) THEN 1 
+                                        ELSE 0 
+                                    END
+                            END) AS 지각,
+                        SUM(CASE
+                                WHEN start_time IS NULL OR end_time IS NULL OR TIMESTAMPDIFF(MINUTE, start_time, end_time) < 240 THEN 0 
+                                ELSE CASE 
+                                        WHEN start_time <= CAST(CONCAT(date, ' 09:10:00') AS DATETIME) AND end_time < CAST(CONCAT(date, ' 17:50:00') AS DATETIME) THEN 1 
+                                        ELSE 0 
+                                    END
+                            END) AS 조퇴,
+                        SUM(CASE
+                                WHEN start_time IS NULL OR end_time IS NULL OR TIMESTAMPDIFF(MINUTE, start_time, end_time) < 240 THEN 0 
+                                ELSE CASE 
+                                        WHEN start_time <= CAST(CONCAT(date, ' 09:10:00') AS DATETIME) AND end_time >= CAST(CONCAT(date, ' 17:50:00') AS DATETIME) THEN 1 
+                                        ELSE 0 
+                                    END
+                            END) AS 출석,
+                        SUM(CASE
+                                WHEN start_time IS NULL OR end_time IS NULL OR TIMESTAMPDIFF(MINUTE, start_time, end_time) < 240 THEN 1 
+                                ELSE 0 
+                            END) AS 결석
                     FROM attendance
                     WHERE name = %s;
                 """
@@ -147,14 +168,33 @@ def get_attendance_by_date():
             with db.cursor() as cursor:
                 sql = """
                     SELECT 
-                        SUM(start_time > CAST(CONCAT(%s, ' 09:10:00') AS DATETIME)) AS 지각,
-                        SUM(start_time <= CAST(CONCAT(%s, ' 09:10:00') AS DATETIME) AND end_time < CAST(CONCAT(%s, ' 17:50:00') AS DATETIME)) AS 조퇴,
-                        SUM(start_time <= CAST(CONCAT(%s, ' 09:10:00') AS DATETIME) AND end_time >= CAST(CONCAT(%s, ' 17:50:00') AS DATETIME)) AS 출석,
-                        SUM(start_time IS NULL OR end_time IS NULL OR TIMESTAMPDIFF(MINUTE, start_time, end_time) < 240) AS 결석,
-                        start_time AS 출석시간,
-                        end_time AS 퇴실시간
+                        SUM(CASE
+                                WHEN start_time IS NULL OR end_time IS NULL OR TIMESTAMPDIFF(MINUTE, start_time, end_time) < 240 THEN 0 
+                                ELSE CASE
+                                        WHEN start_time > CAST(CONCAT(%s, ' 09:10:00') AS DATETIME) THEN 1 
+                                        ELSE 0 
+                                    END
+                            END) AS 지각,
+                        SUM(CASE
+                                WHEN start_time IS NULL OR end_time IS NULL OR TIMESTAMPDIFF(MINUTE, start_time, end_time) < 240 THEN 0 
+                                ELSE CASE 
+                                        WHEN start_time <= CAST(CONCAT(%s, ' 09:10:00') AS DATETIME) AND end_time < CAST(CONCAT(%s, ' 17:50:00') AS DATETIME) THEN 1 
+                                        ELSE 0 
+                                    END
+                            END) AS 조퇴,
+                        SUM(CASE
+                                WHEN start_time IS NULL OR end_time IS NULL OR TIMESTAMPDIFF(MINUTE, start_time, end_time) < 240 THEN 0 
+                                ELSE CASE 
+                                        WHEN start_time <= CAST(CONCAT(%s, ' 09:10:00') AS DATETIME) AND end_time >= CAST(CONCAT(%s, ' 17:50:00') AS DATETIME) THEN 1 
+                                        ELSE 0 
+                                    END
+                            END) AS 출석,
+                        SUM(CASE
+                                WHEN start_time IS NULL OR end_time IS NULL OR TIMESTAMPDIFF(MINUTE, start_time, end_time) < 240 THEN 1 
+                                ELSE 0 
+                            END) AS 결석
                     FROM attendance
-                    WHERE name = %s AND date = %s
+                    WHERE name = %s AND date = %s;
                 """
                 cursor.execute(sql, (date, date, date, date, date, name, date))
                 result = cursor.fetchone()
