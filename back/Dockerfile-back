@@ -2,11 +2,10 @@ FROM python:3.12.2
 
 WORKDIR /app
 
-# 호스트의 현재 디렉토리에 있는 모든 파일을 컨테이너의 /app 디렉토리로 복사합니다.
+COPY requirements.txt requirements.txt
+
+RUN pip install -r requirements.txt
+
 COPY . .
 
-RUN python -m venv venv && \
-    . venv/bin/activate && \
-    pip install --no-cache-dir -r requirements.txt
-
-CMD ["venv/bin/python", "app.py"]
+CMD ["python", "app.py"]
