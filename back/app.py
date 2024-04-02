@@ -1,14 +1,14 @@
 from flask import Flask, request, session, jsonify
 from datetime import datetime
 import pymysql.cursors
-from flask_cors import CORS
+from flask_cors import CORS, cross_origin
 import os
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}},
      headers={
-         'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE',
-         'Access-Control-Allow-Headers': 'Origin, Accept, Content-Type, X-Requested-With, Authorization, Access-Control-Request-Method, Access-Control-Request-Headers',
+         'Access-Control-Allow-Methods': 'GET, POST, OPTIONS, PUT, PATCH, DELETE',
+         'Access-Control-Allow-Headers': 'origin, accept, accept-encoding, content-Type, X-Requested-With, authorization, Access-Control-Request-Method, Access-Control-Request-Headers',
          'Access-Control-Max-Age': '60',
          'Access-Control-Allow-Credentials': 'true',
          'Access-Control-Expose-Headers': 'Content-Length'
@@ -16,14 +16,14 @@ CORS(app, resources={r"/*": {"origins": "*"}},
 
 app.secret_key = '34c9fff6c54c731441fddb33548aee32c0ec8faaf7e38563'
 
-# MYSQL_USER = os.environ.get('MYSQL_USER')
-# MYSQL_PASSWORD = os.environ.get('MYSQL_PASSWORD')
-# MYSQL_DATABASE = os.environ.get('MYSQL_DATABASE')
+MYSQL_USER = os.environ.get('MYSQL_USER')
+MYSQL_PASSWORD = os.environ.get('MYSQL_PASSWORD')
+MYSQL_DATABASE = os.environ.get('MYSQL_DATABASE')
 
-# # MySQL 연결 설정
-# app.config['MYSQL_USER'] = MYSQL_USER
-# app.config['MYSQL_PASSWORD'] = MYSQL_PASSWORD
-# app.config['MYSQL_DB'] = MYSQL_DATABASE
+# MySQL 연결 설정
+app.config['MYSQL_USER'] = MYSQL_USER
+app.config['MYSQL_PASSWORD'] = MYSQL_PASSWORD
+app.config['MYSQL_DB'] = MYSQL_DATABASE
 
 # pymysql.init_app(app) 
 
@@ -34,11 +34,13 @@ db = pymysql.connect(host='192.168.56.101',
                         cursorclass=pymysql.cursors.DictCursor)
 
 @app.route('/')
+@cross_origin()
 def home():
     return 'This is home!'
 
 # 로그인
 @app.route("/login", methods=["POST"])
+@cross_origin()
 def login():
     if request.method == 'POST':
         name = request.form['name']
@@ -59,6 +61,7 @@ def login():
 
 # 로그아웃    
 @app.route("/logout",  methods=['GET'])
+@cross_origin()
 def logout():
     # 세션에서 사용자 정보 삭제
     session.pop('user_id', None)
@@ -68,6 +71,7 @@ def logout():
 
 # 출석 등록
 @app.route("/checkin", methods=["POST"])
+@cross_origin()
 def checkin():
     if 'user_id' in session:
         name = session['username']
@@ -85,6 +89,7 @@ def checkin():
 
 # 퇴근 등록
 @app.route("/checkout", methods=["POST"])
+@cross_origin()
 def checkout():
     if 'user_id' in session:
         name = session['username']
@@ -110,6 +115,7 @@ def checkout():
 
 # 전체 출결 카운트 조회
 @app.route('/attendance', methods=['GET'])
+@cross_origin()
 def get_attendance():
     if 'user_id' in session:
         # 사용자의 이름을 세션 ID를 사용하여 가져옴
@@ -169,6 +175,7 @@ def get_attendance():
 
 # 일자별 출결 조회
 @app.route('/attendance/date', methods=['POST'])
+@cross_origin()
 def get_attendance_by_date():
     if 'user_id' in session:
         user_id = session['user_id']
@@ -188,7 +195,9 @@ def get_attendance_by_date():
             # 출결 조회 쿼리 실행
             with db.cursor() as cursor:
                 sql = """
-                    SELECT 
+                    SELECT
+                        start_time AS 출석시간,
+                        end_time AS 퇴실시간,
                         SUM(CASE
                                 WHEN start_time IS NULL OR end_time IS NULL OR TIMESTAMPDIFF(MINUTE, start_time, end_time) < 240 THEN 0 
                                 ELSE CASE
