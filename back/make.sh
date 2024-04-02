@@ -12,4 +12,4 @@ else
 fi
 
 docker build -f Dockerfile-back -t flask-seon:${tag} .
-docker image tag flask-seon:${tag} docker-seon:latest
+docker image tag flask-seon:${tag} docker-flask:latest

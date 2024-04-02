@@ -29,7 +29,7 @@ while True:
                                 db='docker',
                                 cursorclass=pymysql.cursors.DictCursor)
         break
-    except Exception as e:
+    except pymysql.err.OperationalError as e:
         print(e)
         time.sleep(10)
 
