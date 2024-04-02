@@ -1,2 +1,6 @@
 FROM ubuntu:14.04
 RUN apt update -y && apt upgrade -y && apt install keepalived haproxy -y
+COPY ./haproxy.cfg /etc/haproxy/haproxy.cfg
+COPY ./keepalived.conf /etc/keepalived/keepalived.conf
+
+CMD ["sh", "-c", "haproxy -f /etc/haproxy/haproxy.cfg -d && keepalived -f /etc/keepalived/keepalived.conf -d"]

@@ -13,18 +13,11 @@ networks:
 
 services:
   front-proxy:
-    image: nginx:1.25.4-alpine
-    volumes:
-      - ./build/front-proxy.conf:/etc/nginx/nginx.conf
-    command: ["nginx", "-g", "daemon off;"]
+    image: manji955/front-proxy
     networks:
       - front
     ports:
       - "80:80"
-    deploy:
-      placement:
-        constraints:
-          - node.role == manager
 
   frontend:
     image: dbgurum/guestbook:frontend_1.0
@@ -43,23 +36,12 @@ services:
       - PORT=8000
 
   back-proxy:
-    # build:
-    #   context: .
-    #   dockerfile: build/Dockerfile-b-proxy
-    image: manji955/project-back-proxy:1.0
+    image: manji955/back-proxy
     networks:
       - back
       - front
     ports:
       - "8080:8080"
-    deploy:
-      placement:
-        constraints:
-          - node.role == manager
-    volumes:
-      - ./build/haproxy.cfg:/etc/haproxy/haproxy.cfg
-      - ./build/keepalived.conf:/etc/keepalived/keepalived.conf
-    command: ["sh", "-c", "haproxy -f /etc/haproxy/haproxy.cfg -d && keepalived -f /etc/keepalived/keepalived.conf -d"]
 
   backend:
     image: dbgurum/guestbook:backend_1.0
@@ -83,7 +65,3 @@ services:
       - back
     ports:
       - "17017:27017"
-    deploy:
-      placement:
-        constraints:
-          - node.role == manager
