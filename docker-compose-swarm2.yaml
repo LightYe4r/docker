@@ -1,0 +1,97 @@
+version: "3.8"
+
+networks:
+  front:
+    driver: overlay
+    ipam:
+      config:
+        - subnet: "172.30.1.0/24"
+
+  back:
+    driver: overlay
+    ipam:
+      config:
+        - subnet: "172.30.2.0/24"
+
+services:
+  # front-proxy:
+  #   image: nginx:1.25.4-alpine
+  #   volumes:
+  #     - ./build/front-proxy.conf:/etc/nginx/nginx.conf
+  #   command: ["nginx", "-g", "daemon off;"]
+  #   networks:
+  #     - front
+  #   ports:
+  #     - "80:80"
+  #   restart: always
+  #   deploy:
+  #     placement:
+  #       constraints:
+  #         - node.role == manager
+
+  frontend:
+    image: dbgurum/guestbook:frontend_1.0
+    networks:
+      - front
+    restart: always
+    ports:
+      - "80:8000"
+    deploy:
+      replicas: 1
+      mode: replicated
+      placement:
+        constraints:
+          - node.role == worker
+    environment:
+      - GUESTBOOK_API_ADDR=backend:8080
+      - PORT=8000
+
+  # back-proxy:
+  #   # build:
+  #   #   context: .
+  #   #   dockerfile: build/Dockerfile-b-proxy
+  #   image: manji955/project-back-proxy:1.0
+  #   networks:
+  #     - back
+  #     - front
+  #   ports:
+  #     - "8080:8080"
+  #   restart: always
+  #   deploy:
+  #     placement:
+  #       constraints:
+  #         - node.role == manager
+  #   volumes:
+  #     - ./build/haproxy.cfg:/etc/haproxy/haproxy.cfg
+  #     - ./build/keepalived.conf:/etc/keepalived/keepalived.conf
+  #   command: ["sh", "-c", "haproxy -f /etc/haproxy/haproxy.cfg -d && keepalived -f /etc/keepalived/keepalived.conf -d"]
+
+  backend:
+    image: dbgurum/guestbook:backend_1.0
+    networks:
+      - back
+      - front
+    restart: always
+    ports:
+      - "8080:8000"
+    deploy:
+      replicas: 1
+      mode: replicated
+      placement:
+        constraints:
+          - node.role == worker
+    environment:
+      - PORT=8000
+      - GUESTBOOK_DB_ADDR=db:27017
+
+  db:
+    image: mongo:4
+    networks:
+      - back
+    restart: always
+    ports:
+      - "17017:27017"
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager

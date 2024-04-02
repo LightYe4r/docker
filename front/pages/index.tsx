@@ -1,25 +1,32 @@
+import { useState, useEffect } from "react";
 import Link from "next/link";
 
-export default function Home() {
-  return (
-    <div style={{ display: "flex", justifyContent: "center" }}>
-      <style jsx global>{`
-        body {
-          background-color: white;
-          color: black;
-        }
-      `}</style>
+const Home = () => {
+  const [message, setMessage] = useState("");
 
-      <div>
-        <h1>AWS cloud school attendance</h1>
-        <p>
-          로그인하려면
-          <Link href="/login">
-            <span style={{ color: "blue", cursor: "pointer" }}> 여기</span>
-          </Link>
-          를 클릭하세요 :)
-        </p>
-      </div>
+  useEffect(() => {
+    // Flask 서버로 요청을 보내는 함수
+    const fetchData = async () => {
+      try {
+        const response = await fetch("http://192.168.56.104:5000/");
+        const data = await response.text();
+        setMessage(data);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  return (
+    <div>
+      <h1>This is Home!</h1>
+      <p>Message from Flask server: {message}</p>
+      {/* 로그인 페이지로 이동하는 링크 추가 */}
+      <Link href="/login">Go to Login</Link>
     </div>
   );
-}
+};
+
+export default Home;
