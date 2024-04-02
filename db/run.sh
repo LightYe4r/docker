@@ -12,7 +12,7 @@ else
     tag=1.0
 fi
 
-docker build -t mysql-kj2:${tag} .
+docker build -f Dockerfile-db -t mysql-kj2:${tag} .
 docker run -itd --name mysql \
 --restart=always \
 -p 3306:3306 \
