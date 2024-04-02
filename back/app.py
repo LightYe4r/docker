@@ -27,7 +27,7 @@ app.config['MYSQL_DB'] = MYSQL_DATABASE
 
 # pymysql.init_app(app) 
 
-db = pymysql.connect(host='192.168.56.101',
+db = pymysql.connect(host='192.168.56.104',
                         user='root',
                         password='docker',
                         db='docker',

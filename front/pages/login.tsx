@@ -1,27 +1,31 @@
 import { useState } from "react";
+import { useRouter } from "next/router";
 
 const Login = () => {
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
+    const formData = new FormData();
+    formData.append("name", name);
+    formData.append("password", password);
+
     try {
       const response = await fetch("http://192.168.56.104:5000/login", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ name, password }),
+        body: formData,
       });
 
       const data = await response.json();
 
       if (response.ok) {
         setMessage(data.message);
-        // 로그인 성공 시 추가적인 로직 수행 가능
+        // 로그인 성공 시, attendance 페이지로 이동
+        router.push("/checkin");
       } else {
         setMessage(data.message);
       }
