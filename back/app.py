@@ -7,8 +7,8 @@ import os
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}},
      headers={
-         'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE',
-         'Access-Control-Allow-Headers': 'Origin, Accept, Content-Type, X-Requested-With, Authorization, Access-Control-Request-Method, Access-Control-Request-Headers',
+         'Access-Control-Allow-Methods': 'GET, POST, OPTIONS, PUT, PATCH, DELETE',
+         'Access-Control-Allow-Headers': 'origin, accept, accept-encoding, content-Type, X-Requested-With, authorization, Access-Control-Request-Method, Access-Control-Request-Headers',
          'Access-Control-Max-Age': '60',
          'Access-Control-Allow-Credentials': 'true',
          'Access-Control-Expose-Headers': 'Content-Length'
@@ -16,14 +16,14 @@ CORS(app, resources={r"/*": {"origins": "*"}},
 
 app.secret_key = '34c9fff6c54c731441fddb33548aee32c0ec8faaf7e38563'
 
-# MYSQL_USER = os.environ.get('MYSQL_USER')
-# MYSQL_PASSWORD = os.environ.get('MYSQL_PASSWORD')
-# MYSQL_DATABASE = os.environ.get('MYSQL_DATABASE')
+MYSQL_USER = os.environ.get('MYSQL_USER')
+MYSQL_PASSWORD = os.environ.get('MYSQL_PASSWORD')
+MYSQL_DATABASE = os.environ.get('MYSQL_DATABASE')
 
-# # MySQL 연결 설정
-# app.config['MYSQL_USER'] = MYSQL_USER
-# app.config['MYSQL_PASSWORD'] = MYSQL_PASSWORD
-# app.config['MYSQL_DB'] = MYSQL_DATABASE
+# MySQL 연결 설정
+app.config['MYSQL_USER'] = MYSQL_USER
+app.config['MYSQL_PASSWORD'] = MYSQL_PASSWORD
+app.config['MYSQL_DB'] = MYSQL_DATABASE
 
 # pymysql.init_app(app) 
 
@@ -195,7 +195,9 @@ def get_attendance_by_date():
             # 출결 조회 쿼리 실행
             with db.cursor() as cursor:
                 sql = """
-                    SELECT 
+                    SELECT
+                        start_time AS 출석시간,
+                        end_time AS 퇴실시간,
                         SUM(CASE
                                 WHEN start_time IS NULL OR end_time IS NULL OR TIMESTAMPDIFF(MINUTE, start_time, end_time) < 240 THEN 0 
                                 ELSE CASE
