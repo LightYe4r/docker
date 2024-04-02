@@ -19,6 +19,7 @@ app.secret_key = '34c9fff6c54c731441fddb33548aee32c0ec8faaf7e38563'
 MYSQL_USER = os.environ.get('MYSQL_USER')
 MYSQL_PASSWORD = os.environ.get('MYSQL_PASSWORD')
 MYSQL_DATABASE = os.environ.get('MYSQL_DATABASE')
+MYSQL_HOST = os.environ.get('MYSQL_HOST')
 
 # MySQL 연결 설정
 app.config['MYSQL_USER'] = MYSQL_USER
@@ -27,7 +28,7 @@ app.config['MYSQL_DB'] = MYSQL_DATABASE
 
 # pymysql.init_app(app) 
 
-db = pymysql.connect(host='192.168.56.104',
+db = pymysql.connect(host=MYSQL_HOST,
                         user='root',
                         password='docker',
                         db='docker',

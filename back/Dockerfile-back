@@ -1,5 +1,7 @@
 FROM python:3.10.0-alpine
 
+RUN apk update --no-cache && apk add --no-cache bash
+
 WORKDIR /app
 
 COPY requirements.txt requirements.txt
