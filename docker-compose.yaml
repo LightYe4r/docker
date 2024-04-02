@@ -14,41 +14,39 @@ networks:
         - subnet: "172.40.2.0/24"
 
 services:
-  # front-proxy:
-  #   image: manji955/front-proxy:latest
-  #   container_name: docker-front-proxy
-  #   networks:
-  #     - front_net
-  #   restart: always
-  #   ports:
-  #     - "80:80"
-  #   depends_on:
-  #     - frontend
+  front-proxy:
+    image: test-nginx-proxy:1.0
+    container_name: docker-front-proxy
+    networks:
+      - front_net
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - frontend
   
-  # frontend:
-  #   image: nextjs:1.0
-  #   networks:
-  #     - front_net
-  #   restart: always
-  #   ports:
-  #    - "3001-3003:5555"
-  #   deploy:
-  #     replicas: 3
-  #     mode: replicated
-  #   depends_on:
-  #     - back-proxy
+  frontend:
+    image: frontend-test:1.0
+    networks:
+      - front_net
+    restart: always
+    deploy:
+      replicas: 3
+      mode: replicated
+    depends_on:
+      - back-proxy
 
-  # back-proxy:
-  #   image: manji955/back-proxy:latest
-  #   container_name: docker-back-proxy
-  #   networks:
-  #     - front_net
-  #     - back_net
-  #   restart: always
-  #   ports:
-  #     - "8080:8080"
-  #   depends_on:
-  #     - backend
+  back-proxy:
+    image: manji955/back-proxy:latest
+    container_name: docker-back-proxy
+    networks:
+      - front_net
+      - back_net
+    restart: always
+    ports:
+      - "8080:8080"
+    depends_on:
+      - backend
     
   backend:
     image: docker-flask:latest
@@ -73,3 +71,16 @@ services:
     restart: always
     ports:
       - "3306:3306"
+
+  # frontend:
+  #   image: nextjs:1.0
+  #   networks:
+  #     - front_net
+  #   restart: always
+  #   ports:
+  #    - "3001-3003:5555"
+  #   deploy:
+  #     replicas: 3
+  #     mode: replicated
+  #   depends_on:
+  #     - back-proxy
