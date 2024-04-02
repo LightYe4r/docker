@@ -1,104 +1,64 @@
-import Link from "next/link"; // Link 컴포넌트 import
 import { useState } from "react";
-import { useRouter } from "next/router";
 
-export default function Login() {
-  const router = useRouter();
-  const [username, setUsername] = useState("");
+const Login = () => {
+  const [name, setName] = useState("");
   const [password, setPassword] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
+  const [message, setMessage] = useState("");
 
-  const handleLogin = () => {
-    // 비밀번호가 비어 있는지 확인하고 비어 있다면 거부
-    if (!password) {
-      setErrorMessage("비밀번호를 입력하세요.");
-      return;
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    try {
+      const response = await fetch("http://192.168.56.104:5000/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ name, password }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setMessage(data.message);
+        // 로그인 성공 시 추가적인 로직 수행 가능
+      } else {
+        setMessage(data.message);
+      }
+    } catch (error) {
+      console.error("Error logging in:", error);
     }
-
-    // 여기서는 간단하게 username을 localStorage에 저장하고, 실제 인증 로직은 생략하겠습니다.
-    localStorage.setItem("username", username);
-    router.push("/welcome"); // 로그인 후 환영 페이지로 이동
   };
 
   return (
-    <div
-      style={{
-        backgroundColor: "white",
-        minHeight: "100vh",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        color: "black",
-        textAlign: "center",
-      }}
-    >
-      <div
-        style={{
-          border: "2px solid black",
-          borderRadius: "10px",
-          padding: "20px",
-        }}
-      >
-        <h1>
-          ACS Attendance <br />
-          Login Page
-        </h1>
+    <div>
+      <h1>Login</h1>
+      <form onSubmit={handleSubmit}>
         <div>
           <label>
-            사용자 이름:{" "}
+            Name:
             <input
               type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              style={{
-                backgroundColor: "white",
-                color: "black",
-                border: "1px solid black",
-                borderRadius: "4px",
-                padding: "10px",
-                margin: "5px 0",
-                width: "200px",
-                boxSizing: "border-box",
-              }}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
             />
           </label>
         </div>
         <div>
           <label>
-            비밀번호:{" "}
+            Password:
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              style={{
-                backgroundColor: "white",
-                color: "black",
-                border: "1px solid black",
-                borderRadius: "4px",
-                padding: "10px",
-                margin: "5px 0",
-                width: "200px",
-                boxSizing: "border-box",
-              }}
             />
           </label>
-          <p style={{ color: "red" }}>{errorMessage}</p>
         </div>
-        <button
-          onClick={handleLogin}
-          style={{
-            marginTop: "10px",
-            padding: "10px 20px",
-            backgroundColor: "blue",
-            color: "white",
-            border: "none",
-            borderRadius: "4px",
-            cursor: "pointer",
-          }}
-        >
-          로그인
-        </button>
-      </div>
+        <button type="submit">Login</button>
+      </form>
+      {message && <p>{message}</p>}
     </div>
   );
-}
+};
+
+export default Login;
