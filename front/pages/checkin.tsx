@@ -1,38 +1,49 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
-const Checkin = () => {
+const Checkin = ({ username }) => {
   const [message, setMessage] = useState("");
+  const currentTime = new Date();
+  const hours = currentTime.getHours().toString().padStart(2, "0");
+  const minutes = currentTime.getMinutes().toString().padStart(2, "0");
+  const seconds = currentTime.getSeconds().toString().padStart(2, "0");
+  const timeString = `${hours}:${minutes}:${seconds}`;
 
-  useEffect(() => {
-    const handleCheckin = async () => {
-      try {
-        const response = await fetch(
-          process.env.NEXT_PUBLIC_API_URL + "/checkin",
-          {
-            method: "POST",
-            credentials: "include", // 쿠키를 서버로 전달하기 위해 필요
-          }
-        );
+  const handleCheckin = async () => {
+    try {
+      const response = await fetch("http://192.168.56.104:5000/checkin", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: username,
+          date: timeString,
+        }),
+      });
 
-        if (response.ok) {
-          const data = await response.json();
-          setMessage(data.message);
-        } else {
-          const errorData = await response.json();
-          setMessage(errorData.message);
-        }
-      } catch (error) {
-        console.error("Error checking in:", error);
+      const data = await response.json();
+
+      if (response.ok) {
+        setMessage(data.message);
+      } else {
+        setMessage(data.message);
       }
-    };
-
-    handleCheckin();
-  }, []);
+    } catch (error) {
+      console.error("Error checking in:", error);
+    }
+  };
 
   return (
     <div>
       <h1>Checkin</h1>
-      <p>{message}</p>
+      <div>
+        <label>Name: {username}</label>
+      </div>
+      <div>
+        <label>Time: {timeString}</label>
+      </div>
+      <button onClick={handleCheckin}>Checkin</button>
+      {message && <p>{message}</p>}
     </div>
   );
 };
