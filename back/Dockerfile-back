@@ -1,6 +1,8 @@
 FROM python:3.10.0-alpine
 
-RUN apk update --no-cache && apk add --no-cache bash
+RUN apk update --no-cache && \
+    apk add --no-cache bash && \
+    apk add --no-cache curl
 
 WORKDIR /app
 
