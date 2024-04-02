@@ -15,19 +15,19 @@ CORS(app, resources={r"/*": {"origins": "*"}},
          'Access-Control-Max-Age': '60',
          'Access-Control-Allow-Credentials': 'true',
          'Access-Control-Expose-Headers': 'Content-Length'
-     })
+     }, supports_credentials=True)
 
-# app.secret_key = '34c9fff6c54c731441fddb33548aee32c0ec8faaf7e38563'
+app.secret_key = '34c9fff6c54c731441fddb33548aee32c0ec8faaf7e38563'
 
 MYSQL_HOST = os.environ.get('MYSQL_HOST')
 
 while True:
     try:
-        db = pymysql.connect(host=MYSQL_HOST,
-                                user='root',
-                                password='docker',
-                                db='docker',
-                                cursorclass=pymysql.cursors.DictCursor)
+        db = pymysql.connect(host='192.168.56.101',
+                             user='root',
+                             password='docker',
+                             db='docker',
+                             cursorclass=pymysql.cursors.DictCursor)
         break
     except pymysql.err.OperationalError as e:
         print(e)
@@ -56,7 +56,7 @@ def login():
         if user:
             session['user_id'] = user['id']
             session['username'] = user['name']
-            return jsonify({'message': '로그인 성공', 'user': user}), 200
+            return jsonify({'message': '로그인 성공', 'user': "test"}), 200
         else:
             return jsonify({'message': '아이디 또는 비밀번호가 잘못되었습니다.'}), 401
 
@@ -75,15 +75,25 @@ def logout():
 @cross_origin()
 def checkin():
     if 'user_id' in session:
+        user_id = session['user_id']
         name = session['username']
         date = datetime.now().date()
         start_time = datetime.now()
-
+        
+        if date != start_time.strftime('%Y-%m-%d'):
+            return jsonify({'message': "출석 날짜와 오늘 날짜가 다릅니다."}), 404
+        
         # 로그인 상태에서만 출석 데이터 추가
+        ## start_time date의 날짜가 안맞으면 database에 안들어감. 
         with db.cursor() as cursor:
-            sql = "INSERT INTO attendance (date, start_time, name) VALUES (%s, %s, %s)"
-            cursor.execute(sql, (date, start_time, name))
-            db.commit()
+            try:
+                sql = "INSERT INTO attendance (date, start_time, name) VALUES (%s, %s, %s)"
+                cursor.execute(sql, (date, start_time, name))
+                db.commit()
+                print("data has been entered.")
+                
+            except pymysql.err.OperationalError as e:
+                print(e)
         return jsonify({'message': '출석 등록이 완료되었습니다.'}), 200
     else:
         return jsonify({'message': '로그인이 필요합니다.'}), 401
