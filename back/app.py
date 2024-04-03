@@ -17,14 +17,22 @@ CORS(app, resources={r"/*": {"origins": "*"}},
          'Access-Control-Expose-Headers': 'Content-Length'
      }, supports_credentials=True)
 
+
+
+
+
 app.secret_key = secrets.token_hex(16)
+
+# app.config['SESSION_COOKIE_SAMESITE'] = 'None'  # Important for cross-domain cookies
+# app.config['SESSION_COOKIE_HTTPONLY'] = True  # To prevent access through client-side scripts
+
 
 MYSQL_HOST = os.environ.get('MYSQL_HOST')
 
 # Python이 실행될 때까지 대기
 while True:
     try:
-        db = pymysql.connect(host='192.168.56.101', # PUSH할때 MYSQL_HOST로 바꾸기
+        db = pymysql.connect(host='192.168.56.104', # PUSH할때 MYSQL_HOST로 바꾸기
                              user='root',
                              password='docker',
                              db='docker',
@@ -75,7 +83,7 @@ def login():
 @app.route("/checkin", methods=["POST"])
 @cross_origin()
 def checkin():
-    user_id = request.json.get('id') # 클라이언트에서 전달된 사용자 ID
+    #user_id = request.json.get('id') # 클라이언트에서 전달된 사용자 ID
     if 'user_id':
         name = request.json.get('name')  # 클라이언트에서 전달된 사용자 이름
         date = datetime.now().date()
@@ -117,16 +125,17 @@ def checkout():
         return jsonify({'message': '로그인이 필요합니다.'}), 401
 
 # 전체 출결 카운트 조회
-@app.route('/attendance', methods=['GET'])
+@app.route('/attendance', methods=['POST'])
 @cross_origin()
 def get_attendance():
-    user_id = request.json.get('id')  # 클라이언트에서 전달된 사용자 ID
-    if 'user_id':
+    user_id = int(request.json.get('id'))  # 클라이언트에서 전달된 사용자 ID
+
+    if user_id:
         with db.cursor() as cursor:
-            sql = "SELECT name FROM users WHERE id = %s"
-            cursor.execute(sql, (user_id,))
+            sql = f"SELECT name FROM users WHERE id = {user_id}"
+            cursor.execute(sql)
             user = cursor.fetchone()
-        
+            
         if user:
             name = request.json.get('name')
 
@@ -180,7 +189,7 @@ def get_attendance():
 @cross_origin()
 def get_attendance_by_date():
     user_id = request.json.get('id')  # 클라이언트에서 전달된 사용자 ID
-    if 'user_id':
+    if user_id:
         # 조회할 날짜
         date = request.json.get('date')
 
