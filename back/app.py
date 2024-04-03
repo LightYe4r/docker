@@ -92,10 +92,10 @@ def checkstatus():
                 cursor.execute(sql, (name, date))
                 attendance = cursor.fetchone()
             if attendance:
-                start_time = attendance['start_time'].strftime("%Y-%m-%d %H:%M:%S")
-                return jsonify({'message': '출석 기록이 있습니다.', 'start_time': start_time}), 200
+                status = True
             else:
-                return jsonify({'message': '출석 기록이 없습니다.'}), 404
+                status = False
+            return jsonify({'message': '출석 기록이 있습니다.', 'status': status}), 200
         else:
             return jsonify({'message': '사용자를 찾을 수 없습니다.'}), 404
     else:
