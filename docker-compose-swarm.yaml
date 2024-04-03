@@ -26,7 +26,7 @@ services:
     ports:
       - "3001-3003:8000"
     deploy:
-      replicas: 3
+      replicas: 1
       mode: replicated
       placement:
         constraints:
@@ -50,7 +50,7 @@ services:
     ports:
       - "5001-5003:8000"
     deploy:
-      replicas: 3
+      replicas: 1
       mode: replicated
       placement:
         constraints:
