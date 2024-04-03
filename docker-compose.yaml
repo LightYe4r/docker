@@ -37,7 +37,8 @@ services:
       - back-proxy
 
   back-proxy:
-    image: manji955/back-proxy:latest
+    image: haproxy-test:1.0
+    # image: manji955/back-proxy:latest
     container_name: docker-back-proxy
     networks:
       - front_net
@@ -53,8 +54,8 @@ services:
     networks:
       - back_net
     restart: always
-    ports:
-      - "5001-5003:5000"
+    # ports:
+    #   - "5001-5003:5000"
     deploy:
       replicas: 3
       mode: replicated
@@ -69,8 +70,8 @@ services:
     networks:
       - back_net
     restart: always
-    ports:
-      - "3306:3306"
+    # ports:
+    #   - "3306:3306"
 
   # frontend:
   #   image: nextjs:1.0
