@@ -14,17 +14,19 @@ networks:
 services:
   front-proxy:
     image: manji955/front-proxy
+    # command: ["sh", "-c", "./node_exporter/node_exporter"]
     networks:
       - front
     ports:
       - "80:80"
+      - "9100:9100"
 
   frontend:
     image: dbgurum/guestbook:frontend_1.0
     networks:
       - front
     ports:
-      - "3001-3003:8000"
+      - "3001-3003:80"
     deploy:
       replicas: 1
       mode: replicated
@@ -33,7 +35,7 @@ services:
           - node.role == worker
     environment:
       - GUESTBOOK_API_ADDR=back-proxy:8080
-      - PORT=8000
+      - PORT=80
 
   back-proxy:
     image: manji955/back-proxy
