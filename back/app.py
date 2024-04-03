@@ -1,9 +1,9 @@
-from datetime import datetime, date
+from datetime import datetime
 import os
 import time
 import secrets
 import pymysql.cursors # type: ignore
-from flask import Flask, request, session, jsonify, redirect, url_for # type: ignore
+from flask import Flask, request, session, jsonify # type: ignore
 from flask_cors import CORS, cross_origin # type: ignore
 
 
@@ -17,7 +17,14 @@ CORS(app, resources={r"/*": {"origins": "*"}},
          'Access-Control-Expose-Headers': 'Content-Length'
      }, supports_credentials=True)
 
+
+
+
+
 app.secret_key = secrets.token_hex(16)
+
+# app.config['SESSION_COOKIE_SAMESITE'] = 'None'  # Important for cross-domain cookies
+# app.config['SESSION_COOKIE_HTTPONLY'] = True  # To prevent access through client-side scripts
 
 
 MYSQL_HOST = os.environ.get('MYSQL_HOST')
@@ -25,7 +32,7 @@ MYSQL_HOST = os.environ.get('MYSQL_HOST')
 # Python이 실행될 때까지 대기
 while True:
     try:
-        db = pymysql.connect(host='192.168.56.101', # PUSH할때 MYSQL_HOST로 바꾸기
+        db = pymysql.connect(host='192.168.56.104', # PUSH할때 MYSQL_HOST로 바꾸기
                              user='root',
                              password='docker',
                              db='docker',
@@ -56,8 +63,8 @@ def login():
             user = cursor.fetchone()
 
         if user:
-            session['user_id'] = user['id']
-            session['username'] = user['name']
+            #session['user_id'] = user['id']
+            #session['username'] = user['name']
             return jsonify({'message': '로그인 성공', 'id': user['id'], 'name': user['name']}), 200
         else:
             return jsonify({'message': '아이디 또는 비밀번호가 잘못되었습니다.'}), 401
@@ -69,44 +76,15 @@ def login():
 #     # 세션에서 사용자 정보 삭제
 #     session.pop('user_id', None)
 #     session.pop('username', None)
+    
 #     return jsonify({'message': '로그아웃 되었습니다.'}), 200
-
-# 상태 확인
-@app.route("/checkstatus", methods=["POST"])
-@cross_origin()
-def checkstatus():
-    user_id = request.json.get('id') # 클라이언트에서 전달된 사용자 ID
-    if user_id:
-        with db.cursor() as cursor:
-            sql = "SELECT name FROM users WHERE id = %s"
-            cursor.execute(sql, (user_id,))
-            user = cursor.fetchone()
-
-        if user:
-            name = request.json.get('name')
-            date = datetime.now().date()
-            
-            # 오늘 날짜의 출석 기록 조회
-            with db.cursor() as cursor:
-                sql = "SELECT start_time FROM attendance WHERE name = %s AND date = %s"
-                cursor.execute(sql, (name, date))
-                attendance = cursor.fetchone()
-            if attendance:
-                status = True
-            else:
-                status = False
-            return jsonify({'message': '출석 기록이 있습니다.', 'status': status}), 200
-        else:
-            return jsonify({'message': '사용자를 찾을 수 없습니다.'}), 404
-    else:
-        return jsonify({'message': '사용자 ID를 전달해야 합니다.'}), 400
 
 # 출석 등록
 @app.route("/checkin", methods=["POST"])
 @cross_origin()
 def checkin():
-    user_id = request.json.get('id') # 클라이언트에서 전달된 사용자 ID
-    if user_id:
+    #user_id = request.json.get('id') # 클라이언트에서 전달된 사용자 ID
+    if 'user_id':
         name = request.json.get('name')  # 클라이언트에서 전달된 사용자 이름
         date = datetime.now().date()
         start_time = datetime.now()
@@ -146,15 +124,49 @@ def checkout():
     else:
         return jsonify({'message': '로그인이 필요합니다.'}), 401
 
+
+@app.route("/checkstatus", methods=["POST"])
+@cross_origin()
+def checkstatus():
+    user_id = int(request.json.get('id'))  # 클라이언트에서 전달된 사용자 ID
+
+    if user_id:
+        with db.cursor() as cursor:
+            sql = f"SELECT name FROM users WHERE id = {user_id}"
+            cursor.execute(sql)
+            user = cursor.fetchone()
+
+        if user:
+            name = request.json.get('name')
+            date = datetime.now().date()
+            
+            # 오늘 날짜의 출석 기록 조회
+            with db.cursor() as cursor:
+                sql = f"SELECT start_time FROM attendance WHERE name = {name} AND date = {date}"
+                cursor.execute(sql)
+                attendance = cursor.fetchone()
+            if attendance:
+                status = True
+            else:
+                status = False
+            return jsonify({'message': '출석 기록이 있습니다.', 'status': status}), 200
+        else:
+            return jsonify({'message': '사용자를 찾을 수 없습니다.'}), 404
+        #return jsonify({'message': '사용자 ID를 전달해야 합니다.'}), 400
+    else:
+        return jsonify({'message': '사용자 ID를 전달해야 합니다.'}), 400
+
+
 # 전체 출결 카운트 조회
 @app.route('/attendance', methods=['POST'])
 @cross_origin()
 def get_attendance():
-    user_id = request.json.get('id')  # 클라이언트에서 전달된 사용자 ID
+    user_id = int(request.json.get('id'))  # 클라이언트에서 전달된 사용자 ID
+
     if user_id:
         with db.cursor() as cursor:
-            sql = "SELECT name FROM users WHERE id = %s"
-            cursor.execute(sql, (user_id,))
+            sql = f"SELECT name FROM users WHERE id = {user_id}"
+            cursor.execute(sql)
             user = cursor.fetchone()
             
         if user:
