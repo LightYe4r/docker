@@ -17,14 +17,7 @@ CORS(app, resources={r"/*": {"origins": "*"}},
          'Access-Control-Expose-Headers': 'Content-Length'
      }, supports_credentials=True)
 
-
-
-
-
 app.secret_key = secrets.token_hex(16)
-
-# app.config['SESSION_COOKIE_SAMESITE'] = 'None'  # Important for cross-domain cookies
-# app.config['SESSION_COOKIE_HTTPONLY'] = True  # To prevent access through client-side scripts
 
 
 MYSQL_HOST = os.environ.get('MYSQL_HOST')
@@ -32,7 +25,7 @@ MYSQL_HOST = os.environ.get('MYSQL_HOST')
 # Python이 실행될 때까지 대기
 while True:
     try:
-        db = pymysql.connect(host='192.168.56.104', # PUSH할때 MYSQL_HOST로 바꾸기
+        db = pymysql.connect(host='192.168.56.101', # PUSH할때 MYSQL_HOST로 바꾸기
                              user='root',
                              password='docker',
                              db='docker',
@@ -112,13 +105,8 @@ def checkstatus():
 @app.route("/checkin", methods=["POST"])
 @cross_origin()
 def checkin():
-<<<<<<< Updated upstream
-    #user_id = request.json.get('id') # 클라이언트에서 전달된 사용자 ID
-    if 'user_id':
-=======
     user_id = request.json.get('id') # 클라이언트에서 전달된 사용자 ID
     if user_id:
->>>>>>> Stashed changes
         name = request.json.get('name')  # 클라이언트에서 전달된 사용자 이름
         date = datetime.now().date()
         start_time = datetime.now()
@@ -162,20 +150,15 @@ def checkout():
 @app.route('/attendance', methods=['POST'])
 @cross_origin()
 def get_attendance():
-<<<<<<< Updated upstream
-    user_id = int(request.json.get('id'))  # 클라이언트에서 전달된 사용자 ID
-
-=======
     user_id = request.json.get('id')  # 클라이언트에서 전달된 사용자 ID
->>>>>>> Stashed changes
     if user_id:
         with db.cursor() as cursor:
-            sql = f"SELECT name FROM users WHERE id = {user_id}"
-            cursor.execute(sql)
+            sql = "SELECT name FROM users WHERE id = %s"
+            cursor.execute(sql, (user_id,))
             user = cursor.fetchone()
             
         if user:
-            name = user[0]
+            name = request.json.get('name')
 
             # 로그인한 사용자의 출결 조회 쿼리 실행
             with db.cursor() as cursor:
