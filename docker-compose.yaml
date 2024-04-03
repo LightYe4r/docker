@@ -16,7 +16,7 @@ networks:
 services:
   front-proxy:
     image: test-nginx-proxy:1.0
-    container_name: docker-front-proxy
+    container_name: docker-nginx
     networks:
       - front_net
     restart: always
@@ -39,7 +39,7 @@ services:
   back-proxy:
     image: haproxy-test:1.0
     # image: manji955/back-proxy:latest
-    container_name: docker-back-proxy
+    container_name: docker-haproxy
     networks:
       - front_net
       - back_net
@@ -66,12 +66,10 @@ services:
     
   database:
     image: kijung2/docker-mysql:latest
-    container_name: docker-mysql
+    container_name: docker-db
     networks:
       - back_net
     restart: always
-    # ports:
-    #   - "3306:3306"
 
   # frontend:
   #   image: nextjs:1.0
