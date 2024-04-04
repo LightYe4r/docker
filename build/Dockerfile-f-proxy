@@ -1,11 +1,3 @@
 FROM nginx:1.25.4-alpine
 COPY ./front-proxy.conf /etc/nginx/nginx.conf
 CMD ["nginx", "-g", "daemon off;"]
-
-
-
-
-# ADD node_exporter-1.0.1.linux-amd64 /node_exporter
-# ADD nginx-node.sh /nginx-node.sh
-# CMD ["/bin/sh", "-c", "./node_exporter/node_exporter"]
-# CMD ["/bin/sh", "-c", "./nginx-node.sh;"]
