@@ -1,21 +1,19 @@
-version: "3.8"
-
 networks:
   front_net:
     driver: bridge
     ipam:
       config:
-        - subnet: "172.40.1.0/24"
+        - subnet: "172.30.1.0/24"
 
   back_net:
     driver: bridge
     ipam:
       config:
-        - subnet: "172.40.2.0/24"
+        - subnet: "172.30.2.0/24"
 
 services:
   front-proxy:
-    image: test-nginx-proxy:1.0
+    image: kijung2/docker-compose-nginx:latest
     container_name: docker-nginx
     networks:
       - front_net
@@ -26,7 +24,7 @@ services:
       - frontend
   
   frontend:
-    image: frontend-test:1.0
+    image: jae10/docker-nextjs:latest
     networks:
       - front_net
     restart: always
@@ -35,27 +33,24 @@ services:
       mode: replicated
     depends_on:
       - back-proxy
+    environment:
+      - NEXT_PUBLIC_API_URL=http://192.168.56.101:80
 
   back-proxy:
-    image: haproxy-test:1.0
-    # image: manji955/back-proxy:latest
+    image: kijung2/docker-compose-haproxy:latest
     container_name: docker-haproxy
     networks:
       - front_net
       - back_net
     restart: always
-    ports:
-      - "8080:8080"
     depends_on:
       - backend
     
   backend:
-    image: docker-flask:latest
+    image: seonxx/docker-flask:latest
     networks:
       - back_net
     restart: always
-    # ports:
-    #   - "5001-5003:5000"
     deploy:
       replicas: 3
       mode: replicated
@@ -70,16 +65,3 @@ services:
     networks:
       - back_net
     restart: always
-
-  # frontend:
-  #   image: nextjs:1.0
-  #   networks:
-  #     - front_net
-  #   restart: always
-  #   ports:
-  #    - "3001-3003:5555"
-  #   deploy:
-  #     replicas: 3
-  #     mode: replicated
-  #   depends_on:
-  #     - back-proxy
