@@ -9,7 +9,6 @@ from flask_cors import CORS, cross_origin # type: ignore
 from dbutils.pooled_db import PooledDB # type: ignore
 
 MYSQL_HOST = os.environ.get('MYSQL_HOST')
-
 POOL = PooledDB(
     creator=pymysql,  # Use PyMySQL as the connection creator
     maxconnections=8,  # Maximum number of connections in the pool
@@ -21,6 +20,7 @@ POOL = PooledDB(
 )
 
 app = Flask(__name__)
+
 CORS(app, resources={r"/*": {"origins": "*"}},
      headers={
          'Access-Control-Allow-Methods': 'GET, POST, OPTIONS, PUT, PATCH, DELETE',
@@ -32,15 +32,10 @@ CORS(app, resources={r"/*": {"origins": "*"}},
 
 app.secret_key = secrets.token_hex(16)
 
-
 # Python이 실행될 때까지 대기
 while True:
     try:
-        db = pymysql.connect(host=MYSQL_HOST, # PUSH할때 MYSQL_HOST로 바꾸기
-                             user='root',
-                             password='docker',
-                             db='docker',
-                             cursorclass=pymysql.cursors.DictCursor)
+        db = POOL.connection()
         break
     except pymysql.err.OperationalError as e:
         print(e)
@@ -198,7 +193,6 @@ def checkstatus():
 
 
 # 전체 출결 조회
-
 @app.route('/attendance', methods=['POST'])
 @cross_origin()
 def get_attendance():
