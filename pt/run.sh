@@ -16,19 +16,23 @@ database_ip="172.31.1.100"
 api_endpoint="http://192.168.56.101:80"
 
 ### NETWORK ###
-docker network create \
---driver=bridge \
---subnet=172.30.1.0/24 \
---ip-range=172.30.1.0/24 \
---gateway=172.30.1.1 \
-${front_net}
+if ! docker network ls | grep -q ${front_net}; then
+    docker network create \
+    --driver=bridge \
+    --subnet=172.30.1.0/24 \
+    --ip-range=172.30.1.0/24 \
+    --gateway=172.30.1.1 \
+    ${front_net}
+fi
 
-docker network create \
---driver=bridge \
---subnet=172.31.1.0/24 \
---ip-range=172.31.1.0/24 \
---gateway=172.31.1.1 \
-${back_net}
+if ! docker network ls | grep -q ${back_net}; then
+    docker network create \
+    --driver=bridge \
+    --subnet=172.31.1.0/24 \
+    --ip-range=172.31.1.0/24 \
+    --gateway=172.31.1.1 \
+    ${backn_net}
+fi
 
 ### DATABASE-MYSQL ###
 if docker ps -a | grep -q "docker-db"; then
@@ -36,7 +40,7 @@ if docker ps -a | grep -q "docker-db"; then
     docker rm docker-db
 fi
 
-docker run -itd --name docker-db \
+docker run -d --name docker-db \
 --restart=always \
 --network=${back_net} \
 --ip ${database_ip} \
@@ -94,20 +98,20 @@ fi
 docker run -d --name docker-frontend-1 \
 --restart=always \
 --network=${front_net} \
--e NEXT_PUBLIC_API_URL=${api_endpoint}
+-e NEXT_PUBLIC_API_URL=${api_endpoint} \
 ${frontend_image}
 
 
 docker run -d --name docker-frontend-2 \
 --restart=always \
 --network=${front_net} \
--e NEXT_PUBLIC_API_URL=${api_endpoint}
+-e NEXT_PUBLIC_API_URL=${api_endpoint} \
 ${frontend_image}
 
 docker run -d --name docker-frontend-3 \
 --restart=always \
 --network=${front_net} \
--e NEXT_PUBLIC_API_URL=${api_endpoint}
+-e NEXT_PUBLIC_API_URL=${api_endpoint} \
 ${frontend_image}
 
 ### NGINX ###
