@@ -1,11 +1,23 @@
+from collections import defaultdict
 from datetime import datetime, date
 import os
 import time
 import secrets
 import pymysql.cursors # type: ignore
-from flask import Flask, request, jsonify # type: ignore
-from flask_cors import CORS, cross_origin # type: ignore
+from flask import Flask, request, jsonify
+from flask_cors import CORS, cross_origin 
+from dbutils.pooled_db import PooledDB
 
+
+POOL = PooledDB(
+    creator=pymysql,  # Use PyMySQL as the connection creator
+    maxconnections=8,  # Maximum number of connections in the pool
+    host='192.168.56.101',  # MYSQL_HOST로 바꾸기
+    user='root',
+    password='docker',
+    db='docker',
+    cursorclass=pymysql.cursors.DictCursor
+)
 
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}},
@@ -24,11 +36,12 @@ MYSQL_HOST = os.environ.get('MYSQL_HOST')
 # Python이 실행될 때까지 대기
 while True:
     try:
-        db = pymysql.connect(host='192.168.56.101', # PUSH할때 MYSQL_HOST로 바꾸기
-                             user='root',
-                             password='docker',
-                             db='docker',
-                             cursorclass=pymysql.cursors.DictCursor)
+        # db = pymysql.connect(host='192.168.56.101', # PUSH할때 MYSQL_HOST로 바꾸기
+        #                      user='root',
+        #                      password='docker',
+        #                      db='docker',
+        #                      cursorclass=pymysql.cursors.DictCursor)
+        db = POOL.connection()
         break
     except pymysql.err.OperationalError as e:
         print(e)
@@ -72,20 +85,36 @@ def login():
 @app.route("/checkin", methods=["POST"])
 @cross_origin()
 def checkin():
-    user_id = request.json.get('id') # 클라이언트에서 전달된 사용자 ID
-    
-    if user_id:
-        name = request.json.get('name')  # 클라이언트에서 전달된 사용자 이름
-        date = datetime.now().date()
-        start_time = datetime.now()
+    try:
+        user_id = request.json.get('id') # 클라이언트에서 전달된 사용자 ID
         
-        with db.cursor() as cursor:
-            sql = "INSERT INTO attendance (date, start_time, name) VALUES (%s, %s, %s)"
-            cursor.execute(sql, (date, start_time, name))
-            db.commit()
-        return jsonify({'message': '출석 등록이 완료되었습니다.'}), 200
-    else:
-        return jsonify({'message': '로그인이 필요합니다.'}), 401
+        if user_id:
+            name = request.json.get('name')  # 클라이언트에서 전달된 사용자 이름
+            date = datetime.now().date()
+            start_time = datetime.now()
+            
+            try:
+                # Get a connection from the pool
+                db = POOL.connection()
+                
+                with db.cursor() as cursor:
+                    sql = "INSERT INTO attendance (date, start_time, name) VALUES (%s, %s, %s)"
+                    cursor.execute(sql, (date, start_time, name))
+                    db.commit()
+            except Exception as e:
+                return jsonify({'error': str(e)}), 500
+            finally:
+                # Release the connection back to the pool
+                if 'db' in locals():
+                    db.close()
+                
+            return jsonify({'message': '출석 등록이 완료되었습니다.'}), 200
+        else:
+            return jsonify({'message': '로그인이 필요합니다.'}), 401
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 
 # 퇴근 등록
 @app.route("/checkout", methods=["POST"])
@@ -119,93 +148,115 @@ def checkout():
 @app.route("/checkstatus", methods=["POST"])
 @cross_origin()
 def checkstatus():
-    user_id = int(request.json.get('id'))  # 클라이언트에서 전달된 사용자 ID
-    
-    if user_id:
-        with db.cursor() as cursor:
-            sql = f"SELECT name FROM users WHERE id = {user_id}"
-            cursor.execute(sql)
-            user = cursor.fetchone()
-
-        if user:
+    try:
+        user_id = int(request.json.get('id'))  # 클라이언트에서 전달된 사용자 ID
+        
+        if user_id:
             name = request.json.get('name')
             date = datetime.now().date()
+            
+            try:
+                # Get a connection from the pool
+                db = POOL.connection()
+                
+                with db.cursor() as cursor:
+                    sql = "SELECT name FROM users WHERE id = %s"
+                    cursor.execute(sql, (user_id,))
+                    user = cursor.fetchone()
 
-            # 오늘 날짜의 출석 기록 조회
-            with db.cursor() as cursor:
-                sql = f"SELECT start_time FROM attendance WHERE name = '{name}' AND date = '{date}'"
-                cursor.execute(sql)
-                attendance = cursor.fetchone()
-            if attendance:
-                status = True
-                return jsonify({'message': '출석 기록이 있습니다.', 'status': status}), 200
-            else:
-                status = False
-                return jsonify({'message': '출석 기록이 없습니다.', 'status': status}), 404
+                if user:
+                    try:
+                        with db.cursor() as cursor:
+                            sql = "SELECT start_time FROM attendance WHERE name = %s AND date = %s"
+                            cursor.execute(sql, (name, date))
+                            attendance = cursor.fetchone()
+                        
+                        if attendance:
+                            status = True
+                            return jsonify({'message': '출석 기록이 있습니다.', 'status': status}), 200
+                        else:
+                            status = False
+                            return jsonify({'message': '출석 기록이 없습니다.', 'status': status}), 404
+                    except Exception as e:
+                        return jsonify({'error': str(e)}), 500
+                else:
+                    return jsonify({'message': '사용자를 찾을 수 없습니다.'}), 404
+            except Exception as e:
+                return jsonify({'error': str(e)}), 500
+            finally:
+                # Release the connection back to the pool
+                if 'db' in locals():
+                    db.close()
         else:
-            return jsonify({'message': '사용자를 찾을 수 없습니다.'}), 404
-    else:
-        return jsonify({'message': '사용자 ID를 전달해야 합니다.'}), 400
+            return jsonify({'message': '사용자 ID를 전달해야 합니다.'}), 400
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 
 # 전체 출결 조회
+
 @app.route('/attendance', methods=['POST'])
 @cross_origin()
 def get_attendance():
-    user_id = int(request.json.get('id'))  # 클라이언트에서 전달된 사용자 ID
-
-    if user_id:
-        with db.cursor() as cursor:
-            sql = f"SELECT name FROM users WHERE id = {user_id}"
-            cursor.execute(sql)
-            user = cursor.fetchone()
-            
-        if user:
-            name = request.json.get('name')
-
-            # 로그인한 사용자의 출결 조회 쿼리 실행
+    try:
+        user_id = int(request.json.get('id'))  # 클라이언트에서 전달된 사용자 ID
+        print(user_id)
+        if user_id:
             with db.cursor() as cursor:
-                sql = """
-                    SELECT 
-                        SUM(CASE
-                                WHEN start_time IS NULL OR end_time IS NULL OR TIMESTAMPDIFF(MINUTE, start_time, end_time) < 240 THEN 0 
-                                ELSE CASE
-                                        WHEN start_time > CAST(CONCAT(date, ' 09:10:00') AS DATETIME) THEN 1 
-                                        ELSE 0 
-                                    END
-                            END) AS 지각,
-                        SUM(CASE
-                                WHEN start_time IS NULL OR end_time IS NULL OR TIMESTAMPDIFF(MINUTE, start_time, end_time) < 240 THEN 0 
-                                ELSE CASE 
-                                        WHEN start_time <= CAST(CONCAT(date, ' 09:10:00') AS DATETIME) AND end_time < CAST(CONCAT(date, ' 17:50:00') AS DATETIME) THEN 1 
-                                        ELSE 0 
-                                    END
-                            END) AS 조퇴,
-                        SUM(CASE
-                                WHEN start_time IS NULL OR end_time IS NULL OR TIMESTAMPDIFF(MINUTE, start_time, end_time) < 240 THEN 0 
-                                ELSE CASE 
-                                        WHEN start_time <= CAST(CONCAT(date, ' 09:10:00') AS DATETIME) AND end_time >= CAST(CONCAT(date, ' 17:50:00') AS DATETIME) THEN 1 
-                                        ELSE 0 
-                                    END
-                            END) AS 출석,
-                        SUM(CASE
-                                WHEN start_time IS NULL OR end_time IS NULL OR TIMESTAMPDIFF(MINUTE, start_time, end_time) < 240 THEN 1 
-                                ELSE 0 
-                            END) AS 결석
-                    FROM attendance
-                    WHERE name = %s;
-                """
-                cursor.execute(sql, (name,))
-                result = cursor.fetchone()
+                sql = f"SELECT name FROM users WHERE id = {user_id}"
+                cursor.execute(sql)
+                user = cursor.fetchone()
+                if user:
+                    name = user['name']
+                    
+                    # 로그인한 사용자의 출결 조회 쿼리 실행
+                    try:
+                        with db.cursor() as cursor:
+                            sql = """
+                                SELECT 
+                                    SUM(CASE
+                                            WHEN start_time IS NULL OR end_time IS NULL OR TIMESTAMPDIFF(MINUTE, start_time, end_time) < 240 THEN 0 
+                                            ELSE CASE
+                                                    WHEN start_time > CAST(CONCAT(date, ' 09:10:00') AS DATETIME) THEN 1 
+                                                    ELSE 0 
+                                                END
+                                        END) AS 지각,
+                                    SUM(CASE
+                                            WHEN start_time IS NULL OR end_time IS NULL OR TIMESTAMPDIFF(MINUTE, start_time, end_time) < 240 THEN 0 
+                                            ELSE CASE 
+                                                    WHEN start_time <= CAST(CONCAT(date, ' 09:10:00') AS DATETIME) AND end_time < CAST(CONCAT(date, ' 17:50:00') AS DATETIME) THEN 1 
+                                                    ELSE 0 
+                                                END
+                                        END) AS 조퇴,
+                                    SUM(CASE
+                                            WHEN start_time IS NULL OR end_time IS NULL OR TIMESTAMPDIFF(MINUTE, start_time, end_time) < 240 THEN 0 
+                                            ELSE CASE 
+                                                    WHEN start_time <= CAST(CONCAT(date, ' 09:10:00') AS DATETIME) AND end_time >= CAST(CONCAT(date, ' 17:50:00') AS DATETIME) THEN 1 
+                                                    ELSE 0 
+                                                END
+                                        END) AS 출석,
+                                    SUM(CASE
+                                            WHEN start_time IS NULL OR end_time IS NULL OR TIMESTAMPDIFF(MINUTE, start_time, end_time) < 240 THEN 1 
+                                            ELSE 0 
+                                        END) AS 결석
+                                FROM attendance
+                                WHERE name = %s;
+                            """
+                            cursor.execute(sql, (name,))
+                            result = cursor.fetchone()
 
-            # 결과가 있으면 JSON 형태로 반환
-            if result:
-                return jsonify(result), 200
-            else:
-                return jsonify({'지각': 0, '조퇴': 0, '출석': 0, '결석': 0}), 404
-        else:
-            return jsonify({'message': '사용자를 찾을 수 없습니다.'}), 404
-    else:
-        return jsonify({'message': '로그인이 필요합니다.'}), 401
+                        # 결과가 있으면 JSON 형태로 반환
+                        if result:
+                            return jsonify(result), 200
+                        else:
+                            return jsonify({'지각': 0, '조퇴': 0, '출석': 0, '결석': 0}), 404
+                    except Exception as e:
+                        return jsonify({'error': str(e)}), 500
+                else:
+                    return jsonify({'error': 'User not found'}), 404
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 
 # 일자별 출결 조회
 @app.route('/attendance/date', methods=['POST'])
@@ -278,66 +329,89 @@ def get_attendance_by_date():
 @app.route('/attendance/month', methods=['POST'])
 @cross_origin()
 def get_attendance_by_month():
-    user_id = request.json.get('id')  # 클라이언트에서 전달된 사용자 ID
-    
-    if user_id:
-        # 조회할 달
-        month = request.json.get('month')
-
-        # 사용자의 이름을 세션 ID를 사용하여 가져옴
-        with db.cursor() as cursor:
-            sql = "SELECT name FROM users WHERE id = %s"
-            cursor.execute(sql, (user_id,))
-            user = cursor.fetchone()
+    try:
+        user_id = request.json.get('id')  # 클라이언트에서 전달된 사용자 ID
         
-        if user:
-            name = request.json.get('name')
+        if user_id:
+            month = request.json.get('month')
 
-            # 출결 조회 쿼리 실행
-            with db.cursor() as cursor:
-                sql = """
-                    SELECT
-                        date AS 날짜,
-                        SUM(CASE
-                                WHEN start_time IS NULL OR end_time IS NULL OR TIMESTAMPDIFF(MINUTE, start_time, end_time) < 240 THEN 0 
-                                ELSE CASE
-                                        WHEN start_time > CAST(CONCAT(date, ' 09:10:00') AS DATETIME) THEN 1 
+            # Get a connection from the pool
+            db = POOL.connection()
+
+            try:
+                with db.cursor() as cursor:
+                    sql = "SELECT name FROM users WHERE id = %s"
+                    cursor.execute(sql, (user_id,))
+                    user = cursor.fetchone()
+
+                if user:
+                    name = request.json.get('name')
+
+                    with db.cursor() as cursor:
+                        sql = """
+                            SELECT
+                                date AS 날짜,
+                                SUM(CASE
+                                        WHEN start_time IS NULL OR end_time IS NULL OR TIMESTAMPDIFF(MINUTE, start_time, end_time) < 240 THEN 0 
+                                        ELSE CASE
+                                                WHEN start_time > CAST(CONCAT(date, ' 09:10:00') AS DATETIME) THEN 1 
+                                                ELSE 0 
+                                            END
+                                    END) AS 지각,
+                                SUM(CASE
+                                        WHEN start_time IS NULL OR end_time IS NULL OR TIMESTAMPDIFF(MINUTE, start_time, end_time) < 240 THEN 0 
+                                        ELSE CASE 
+                                                WHEN start_time <= CAST(CONCAT(date, ' 09:10:00') AS DATETIME) AND end_time < CAST(CONCAT(date, ' 17:50:00') AS DATETIME) THEN 1 
+                                                ELSE 0 
+                                            END
+                                    END) AS 조퇴,
+                                SUM(CASE
+                                        WHEN start_time IS NULL OR end_time IS NULL OR TIMESTAMPDIFF(MINUTE, start_time, end_time) < 240 THEN 0 
+                                        ELSE CASE 
+                                                WHEN start_time <= CAST(CONCAT(date, ' 09:10:00') AS DATETIME) AND end_time >= CAST(CONCAT(date, ' 17:50:00') AS DATETIME) THEN 1 
+                                                ELSE 0 
+                                            END
+                                    END) AS 출석,
+                                SUM(CASE
+                                        WHEN start_time IS NULL OR end_time IS NULL OR TIMESTAMPDIFF(MINUTE, start_time, end_time) < 240 THEN 1 
                                         ELSE 0 
-                                    END
-                            END) AS 지각,
-                        SUM(CASE
-                                WHEN start_time IS NULL OR end_time IS NULL OR TIMESTAMPDIFF(MINUTE, start_time, end_time) < 240 THEN 0 
-                                ELSE CASE 
-                                        WHEN start_time <= CAST(CONCAT(date, ' 09:10:00') AS DATETIME) AND end_time < CAST(CONCAT(date, ' 17:50:00') AS DATETIME) THEN 1 
-                                        ELSE 0 
-                                    END
-                            END) AS 조퇴,
-                        SUM(CASE
-                                WHEN start_time IS NULL OR end_time IS NULL OR TIMESTAMPDIFF(MINUTE, start_time, end_time) < 240 THEN 0 
-                                ELSE CASE 
-                                        WHEN start_time <= CAST(CONCAT(date, ' 09:10:00') AS DATETIME) AND end_time >= CAST(CONCAT(date, ' 17:50:00') AS DATETIME) THEN 1 
-                                        ELSE 0 
-                                    END
-                            END) AS 출석,
-                        SUM(CASE
-                                WHEN start_time IS NULL OR end_time IS NULL OR TIMESTAMPDIFF(MINUTE, start_time, end_time) < 240 THEN 1 
-                                ELSE 0 
-                            END) AS 결석
-                    FROM attendance
-                    WHERE name = %s AND MONTH(date) = %s
-                    GROUP BY date;
-                """
-                cursor.execute(sql, (name, month))
-                result = cursor.fetchall()
-             # 결과가 있으면 JSON 형태로 반환
-            if result:
-                return custom_jsonify(result), 200
-            else:
-                return jsonify({'message': '해당 월에 대한 출결 기록이 없습니다.'}), 404
+                                    END) AS 결석
+                            FROM attendance
+                            WHERE name = %s AND MONTH(date) = %s
+                            GROUP BY date;
+                        """
+                        cursor.execute(sql, (name, month))
+                        result = cursor.fetchall()
+                    
+                    # 결과가 있으면 JSON 형태로 반환
+                    if result:
+                        counts = defaultdict(lambda: {'지각': 0, '조퇴': 0, '출석': 0, '결석': 0})
+
+                        # Calculate counts for each day
+                        for entry in result:
+                            day = entry['날짜'].day
+                            for key in ['지각', '조퇴', '출석', '결석']:
+                                if entry[key] > 0:
+                                    counts[day][key] += 1
+
+                        # Convert counts to the desired format
+                        new_result = [{'날짜': day, 'status': max(counts[day], key=counts[day].get)} for day in counts]
+
+                        return jsonify(new_result), 200
+                    else:
+                        return jsonify({'message': '해당 월에 대한 출결 기록이 없습니다.'}), 404
+                else:
+                    return jsonify({'message': '사용자를 찾을 수 없습니다.'}), 404
+            except Exception as e:
+                return jsonify({'error': str(e)}), 500
+            finally:
+                # Release the connection back to the pool
+                if 'db' in locals():
+                    db.close()
         else:
-            return jsonify({'message': '사용자를 찾을 수 없습니다.'}), 404       
-    else:
-        return jsonify({'message': '로그인이 필요합니다.'}), 401
+            return jsonify({'message': '로그인이 필요합니다.'}), 401
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 def custom_jsonify(data):
     def convert_datetime(obj):

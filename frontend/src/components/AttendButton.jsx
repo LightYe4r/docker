@@ -32,7 +32,7 @@ const AttendButton = () => {
         if (res.ok) {
           const aInfo = await res.json();
           setStatus(aInfo.status);
-          console.log(aInfo);
+          //console.log(aInfo);
         }
       } catch (error) {
         console.log(error);
@@ -59,7 +59,8 @@ const AttendButton = () => {
         },
       });
       if (res.ok) {
-        console.log("출석");
+        alert("출석이 되었습니다!");
+        //console.log("출석");
       }
     } catch (error) {
       console.log(error);
@@ -83,7 +84,7 @@ const AttendButton = () => {
         },
       });
       if (res.ok) {
-        console.log("퇴실");
+        alert("오늘 하루 고생하셨습니다!");
       }
     } catch (error) {
       console.log(error);
@@ -91,14 +92,21 @@ const AttendButton = () => {
   }
   return (
     <div>
-      <p>입실 등록</p>
-      <Button className="dark" onClick={Attend}>
-        입실
-      </Button>
-      <p>퇴실 등록</p>
-      <Button className="dark" onClick={Leave}>
-        퇴실
-      </Button>
+      {status == true ? (
+        <>
+          <p>퇴실 등록</p>
+          <Button className="dark" onClick={Leave}>
+            퇴실
+          </Button>
+        </>
+      ) : (
+        <>
+          <p>입실 등록</p>
+          <Button className="dark" onClick={Attend}>
+            입실
+          </Button>
+        </>
+      )}
     </div>
   );
 };

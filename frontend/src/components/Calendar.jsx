@@ -1,7 +1,7 @@
 // pages/index.js or components/Calendar.js
 
 import { useEffect, useState } from "react";
-import { Button, Select } from "@nextui-org/react";
+import { Button, Chip } from "@nextui-org/react";
 
 const MONTH_NAMES = [
   "January",
@@ -25,10 +25,40 @@ const Calendar = () => {
   const [noOfDays, setNoOfDays] = useState([]);
   const [blankDays, setBlankDays] = useState([]);
 
-  const getNoOfDays = () => {
+  const username = localStorage.getItem("namse");
+  const userid = localStorage.getItem("id");
+
+  async function getAttendInfo(month) {
+    const userInfo = {
+      id: userid,
+      name: username,
+      month: month + 1,
+    };
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/attendance/month`,
+        {
+          method: "POST",
+          body: JSON.stringify(userInfo),
+          headers: {
+            "content-type": "application/json",
+          },
+        }
+      );
+      if (res.ok) {
+        const aInfo = await res.json();
+        return aInfo;
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  const getNoOfDays = async () => {
     let daysInMonth = new Date(year, month + 1, 0).getDate();
     let dayOfWeek = new Date(year, month).getDay();
     let blankdaysArray = [];
+    let attendInfo = await getAttendInfo(month);
     for (let i = 1; i <= dayOfWeek; i++) {
       blankdaysArray.push(i);
     }
@@ -39,8 +69,29 @@ const Calendar = () => {
     }
 
     setBlankDays(blankdaysArray);
-    setNoOfDays(daysArray);
+    console.log(attendInfo);
+    // // Create a map for easy access to attendance status
+    const attendanceMap = new Map();
+    attendInfo.forEach((info) => attendanceMap.set(info.날짜, info.status));
+    console.log(attendanceMap);
+    // Combine daysArray with attendance status
+    const combinedArray = daysArray.map((day) => ({
+      날짜: day,
+      status: attendanceMap.has(day) ? attendanceMap.get(day) : "",
+    }));
+    setNoOfDays(combinedArray);
+    console.log(combinedArray);
   };
+
+  function getColor(status) {
+    if (status == "출석") {
+      return "success";
+    } else if (status == "결석") {
+      return "danger";
+    } else {
+      return "warning";
+    }
+  }
 
   useEffect(() => {
     getNoOfDays();
@@ -66,7 +117,7 @@ const Calendar = () => {
   }
 
   return (
-    <div className="antialiased sans-serif bg-gray-100 h-screen">
+    <div className="antialiased sans-serif  h-screen">
       <div className="container mx-auto px-8 py-2 md:py-10">
         <div className="bg-white rounded-lg shadow overflow-hidden">
           <div className="flex items-center justify-between py-2 px-6">
@@ -78,14 +129,11 @@ const Calendar = () => {
                 {year}
               </span>
             </div>
-            <div
-              className="border rounded-lg px-1"
-              style={{ paddingTop: "2px" }}
-            >
-              <Button auto flat onClick={prevMonth}>
+            <div className="flex flex-row gap-3">
+              <Button color="primary" variant="bordered" onClick={prevMonth}>
                 &lt;
               </Button>
-              <Button auto flat onClick={nextMonth}>
+              <Button color="primary" variant="bordered" onClick={nextMonth}>
                 &gt;
               </Button>
             </div>
@@ -122,14 +170,21 @@ const Calendar = () => {
                     <div
                       className={`inline-flex w-6 h-6 items-center justify-center cursor-pointer text-center leading-none rounded-full transition ease-in-out duration-100 ${
                         new Date().toDateString() ===
-                        new Date(year, month, date).toDateString()
+                        new Date(year, month, date.날짜).toDateString()
                           ? "bg-blue-500 text-white"
                           : "text-gray-700 hover:bg-blue-200"
                       }`}
                     >
-                      {date}
+                      {date.날짜}
                     </div>
-                    <p className="text-neutral-950">test</p>
+
+                    {date.status === "" ? (
+                      ""
+                    ) : (
+                      <Chip color={getColor(date.status)} variant="bordered">
+                        {date.status}
+                      </Chip>
+                    )}
                   </div>
                 </div>
               ))}

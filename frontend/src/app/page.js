@@ -46,7 +46,7 @@ export default function Home() {
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <Card className="dark min-w-[360px]">
+      <Card className="min-w-[360px]">
         <CardHeader className="flex gap-3 item-center">
           <h1>로그인</h1>
         </CardHeader>

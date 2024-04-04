@@ -30,12 +30,13 @@ const page = () => {
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
       <div className="flex flex-col gap-3">
-        <p>반갑습니다 {name}님</p>
-        <Button onClick={Logout}>로그아웃</Button>
+        <p className="text-xl font-bold">반갑습니다 {name}님</p>
+
         <AttenanceInfo />
         <AttendButton />
         <Calendar />
         <p>로그아웃</p>
+        <Button onClick={Logout}>로그아웃</Button>
       </div>
     </main>
   );
