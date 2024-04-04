@@ -1,0 +1,2 @@
+FROM haproxy:3.0-dev6-alpine3.19
+COPY ./haproxy-compose.cfg /usr/local/etc/haproxy/haproxy.cfg
