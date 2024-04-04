@@ -1,9 +1,9 @@
-from datetime import datetime
+from datetime import datetime, date
 import os
 import time
 import secrets
 import pymysql.cursors # type: ignore
-from flask import Flask, request, session, jsonify # type: ignore
+from flask import Flask, request, jsonify # type: ignore
 from flask_cors import CORS, cross_origin # type: ignore
 
 
@@ -17,22 +17,14 @@ CORS(app, resources={r"/*": {"origins": "*"}},
          'Access-Control-Expose-Headers': 'Content-Length'
      }, supports_credentials=True)
 
-
-
-
-
 app.secret_key = secrets.token_hex(16)
-
-# app.config['SESSION_COOKIE_SAMESITE'] = 'None'  # Important for cross-domain cookies
-# app.config['SESSION_COOKIE_HTTPONLY'] = True  # To prevent access through client-side scripts
-
 
 MYSQL_HOST = os.environ.get('MYSQL_HOST')
 
 # Python이 실행될 때까지 대기
 while True:
     try:
-        db = pymysql.connect(host='192.168.56.104', # PUSH할때 MYSQL_HOST로 바꾸기
+        db = pymysql.connect(host='192.168.56.101', # PUSH할때 MYSQL_HOST로 바꾸기
                              user='root',
                              password='docker',
                              db='docker',
@@ -41,7 +33,6 @@ while True:
     except pymysql.err.OperationalError as e:
         print(e)
         time.sleep(10)
-
 
 @app.route('/')
 @cross_origin()
@@ -63,8 +54,6 @@ def login():
             user = cursor.fetchone()
 
         if user:
-            #session['user_id'] = user['id']
-            #session['username'] = user['name']
             return jsonify({'message': '로그인 성공', 'id': user['id'], 'name': user['name']}), 200
         else:
             return jsonify({'message': '아이디 또는 비밀번호가 잘못되었습니다.'}), 401
@@ -83,8 +72,9 @@ def login():
 @app.route("/checkin", methods=["POST"])
 @cross_origin()
 def checkin():
-    #user_id = request.json.get('id') # 클라이언트에서 전달된 사용자 ID
-    if 'user_id':
+    user_id = request.json.get('id') # 클라이언트에서 전달된 사용자 ID
+    
+    if user_id:
         name = request.json.get('name')  # 클라이언트에서 전달된 사용자 이름
         date = datetime.now().date()
         start_time = datetime.now()
@@ -101,7 +91,8 @@ def checkin():
 @app.route("/checkout", methods=["POST"])
 @cross_origin()
 def checkout():
-    user_id = request.json.get('id')  # 클라이언트에서 전달된 사용자 ID
+    user_id = request.json.get('id')  # 클라이언트에서 전달된 사용자
+    
     if user_id:
         name = request.json.get('name')  # 클라이언트에서 전달된 사용자 이름
         end_time = datetime.now()
@@ -124,12 +115,12 @@ def checkout():
     else:
         return jsonify({'message': '로그인이 필요합니다.'}), 401
 
-
+# 출결 상태
 @app.route("/checkstatus", methods=["POST"])
 @cross_origin()
 def checkstatus():
     user_id = int(request.json.get('id'))  # 클라이언트에서 전달된 사용자 ID
-
+    
     if user_id:
         with db.cursor() as cursor:
             sql = f"SELECT name FROM users WHERE id = {user_id}"
@@ -139,25 +130,24 @@ def checkstatus():
         if user:
             name = request.json.get('name')
             date = datetime.now().date()
-            
+
             # 오늘 날짜의 출석 기록 조회
             with db.cursor() as cursor:
-                sql = f"SELECT start_time FROM attendance WHERE name = {name} AND date = {date}"
+                sql = f"SELECT start_time FROM attendance WHERE name = '{name}' AND date = '{date}'"
                 cursor.execute(sql)
                 attendance = cursor.fetchone()
             if attendance:
                 status = True
+                return jsonify({'message': '출석 기록이 있습니다.', 'status': status}), 200
             else:
                 status = False
-            return jsonify({'message': '출석 기록이 있습니다.', 'status': status}), 200
+                return jsonify({'message': '출석 기록이 없습니다.', 'status': status}), 404
         else:
             return jsonify({'message': '사용자를 찾을 수 없습니다.'}), 404
-        #return jsonify({'message': '사용자 ID를 전달해야 합니다.'}), 400
     else:
         return jsonify({'message': '사용자 ID를 전달해야 합니다.'}), 400
 
-
-# 전체 출결 카운트 조회
+# 전체 출결 조회
 @app.route('/attendance', methods=['POST'])
 @cross_origin()
 def get_attendance():
@@ -222,6 +212,7 @@ def get_attendance():
 @cross_origin()
 def get_attendance_by_date():
     user_id = request.json.get('id')  # 클라이언트에서 전달된 사용자 ID
+    
     if user_id:
         # 조회할 날짜
         date = request.json.get('date')
@@ -267,7 +258,8 @@ def get_attendance_by_date():
                                 ELSE 0 
                             END) AS 결석
                     FROM attendance
-                    WHERE name = %s AND date = %s;
+                    WHERE name = %s AND date = %s
+                    GROUP BY start_time, end_time;
                 """
                 cursor.execute(sql, (date, date, date, date, date, name, date))
                 result = cursor.fetchone()
@@ -281,6 +273,83 @@ def get_attendance_by_date():
             return jsonify({'message': '사용자를 찾을 수 없습니다.'}), 404
     else:
         return jsonify({'message': '로그인이 필요합니다.'}), 401
+
+# 월별 출결 조회
+@app.route('/attendance/month', methods=['POST'])
+@cross_origin()
+def get_attendance_by_month():
+    user_id = request.json.get('id')  # 클라이언트에서 전달된 사용자 ID
+    
+    if user_id:
+        # 조회할 달
+        month = request.json.get('month')
+
+        # 사용자의 이름을 세션 ID를 사용하여 가져옴
+        with db.cursor() as cursor:
+            sql = "SELECT name FROM users WHERE id = %s"
+            cursor.execute(sql, (user_id,))
+            user = cursor.fetchone()
+        
+        if user:
+            name = request.json.get('name')
+
+            # 출결 조회 쿼리 실행
+            with db.cursor() as cursor:
+                sql = """
+                    SELECT
+                        date AS 날짜,
+                        SUM(CASE
+                                WHEN start_time IS NULL OR end_time IS NULL OR TIMESTAMPDIFF(MINUTE, start_time, end_time) < 240 THEN 0 
+                                ELSE CASE
+                                        WHEN start_time > CAST(CONCAT(date, ' 09:10:00') AS DATETIME) THEN 1 
+                                        ELSE 0 
+                                    END
+                            END) AS 지각,
+                        SUM(CASE
+                                WHEN start_time IS NULL OR end_time IS NULL OR TIMESTAMPDIFF(MINUTE, start_time, end_time) < 240 THEN 0 
+                                ELSE CASE 
+                                        WHEN start_time <= CAST(CONCAT(date, ' 09:10:00') AS DATETIME) AND end_time < CAST(CONCAT(date, ' 17:50:00') AS DATETIME) THEN 1 
+                                        ELSE 0 
+                                    END
+                            END) AS 조퇴,
+                        SUM(CASE
+                                WHEN start_time IS NULL OR end_time IS NULL OR TIMESTAMPDIFF(MINUTE, start_time, end_time) < 240 THEN 0 
+                                ELSE CASE 
+                                        WHEN start_time <= CAST(CONCAT(date, ' 09:10:00') AS DATETIME) AND end_time >= CAST(CONCAT(date, ' 17:50:00') AS DATETIME) THEN 1 
+                                        ELSE 0 
+                                    END
+                            END) AS 출석,
+                        SUM(CASE
+                                WHEN start_time IS NULL OR end_time IS NULL OR TIMESTAMPDIFF(MINUTE, start_time, end_time) < 240 THEN 1 
+                                ELSE 0 
+                            END) AS 결석
+                    FROM attendance
+                    WHERE name = %s AND MONTH(date) = %s
+                    GROUP BY date;
+                """
+                cursor.execute(sql, (name, month))
+                result = cursor.fetchall()
+             # 결과가 있으면 JSON 형태로 반환
+            if result:
+                return custom_jsonify(result), 200
+            else:
+                return jsonify({'message': '해당 월에 대한 출결 기록이 없습니다.'}), 404
+        else:
+            return jsonify({'message': '사용자를 찾을 수 없습니다.'}), 404       
+    else:
+        return jsonify({'message': '로그인이 필요합니다.'}), 401
+
+def custom_jsonify(data):
+    def convert_datetime(obj):
+        if isinstance(obj, (datetime, date)):
+            return obj.strftime('%Y-%m-%d')
+        raise TypeError("Type %s not serializable" % type(obj))
+    
+    for item in data:
+        if '날짜' in item:
+            item['날짜'] = convert_datetime(item['날짜'])
+            
+    return jsonify(data)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
