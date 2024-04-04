@@ -25,7 +25,7 @@ const Calendar = () => {
   const [noOfDays, setNoOfDays] = useState([]);
   const [blankDays, setBlankDays] = useState([]);
 
-  const username = localStorage.getItem("namse");
+  const username = localStorage.getItem("name");
   const userid = localStorage.getItem("id");
 
   async function getAttendInfo(month) {
