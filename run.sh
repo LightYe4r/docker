@@ -1,4 +1,8 @@
 #!/bin/bash
+
+### kijungle <kijung982@gmail.com> 
+### Ki Jung Lee ### kj2 ###
+
 front_net="frontend"
 back_net="backend"
 database_image="kijung2/docker-mysql:latest"
