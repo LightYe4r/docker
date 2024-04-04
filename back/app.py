@@ -8,10 +8,12 @@ from flask import Flask, request, jsonify # type: ignore
 from flask_cors import CORS, cross_origin # type: ignore
 from dbutils.pooled_db import PooledDB # type: ignore
 
+MYSQL_HOST = os.environ.get('MYSQL_HOST')
+
 POOL = PooledDB(
     creator=pymysql,  # Use PyMySQL as the connection creator
     maxconnections=8,  # Maximum number of connections in the pool
-    host='192.168.56.101',  # MYSQL_HOST로 바꾸기
+    host=MYSQL_HOST,  # MYSQL_HOST로 바꾸기
     user='root',
     password='docker',
     db='docker',
@@ -30,7 +32,6 @@ CORS(app, resources={r"/*": {"origins": "*"}},
 
 app.secret_key = secrets.token_hex(16)
 
-MYSQL_HOST = os.environ.get('MYSQL_HOST')
 
 # Python이 실행될 때까지 대기
 while True:

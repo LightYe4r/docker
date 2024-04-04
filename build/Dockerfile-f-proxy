@@ -1,7 +1,7 @@
 FROM nginx:1.25.4-alpine
 COPY ./front-proxy.conf /etc/nginx/nginx.conf
-CMD ["/bin/sh", "-c", "./nginx-node.sh;"]
-
+# CMD ["/bin/sh", "-c", "./nginx-node.sh;"]
+CMD ["nginx", "-g", "daemon off;"]
 
 
 
