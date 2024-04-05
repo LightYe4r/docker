@@ -19,6 +19,7 @@ if docker ps -a | grep -q "docker-db"; then
 fi
 
 docker run -itd --name docker-db \
+--cap-add=sys_nice \
 --restart=always \
 --network=${back_net} \
 --ip ${database_ip} \

@@ -64,6 +64,8 @@ services:
 
   database:
     image: kijung2/docker-mysql:latest
+    cap_add:
+      - SYS_NICE
     networks:
       - back_net
 
