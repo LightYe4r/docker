@@ -9,15 +9,13 @@ const AttendButton = () => {
   const [status, setStatus] = useState(false);
 
   useEffect(() => {
+    const username = localStorage.getItem("name");
+    const userid = localStorage.getItem("id");
+    setName(username);
+    setId(userid);
+
     async function getTodayStatus() {
-      let username = localStorage.getItem("name");
-      let userid = localStorage.getItem("id");
-      setId(userid);
-      setName(username);
-      const userInfo = {
-        id: userid,
-        name: username,
-      };
+      const userInfo = { id: userid, name: username };
       try {
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/checkstatus`,
@@ -41,6 +39,7 @@ const AttendButton = () => {
 
     getTodayStatus();
   }, []);
+
   async function Attend() {
     const currentDate = new Date();
     const formattedDate = currentDate.toISOString().split("T")[0];
@@ -75,6 +74,7 @@ const AttendButton = () => {
       name: name,
       date: formattedDate,
     };
+
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/checkout`, {
         method: "POST",
@@ -90,9 +90,10 @@ const AttendButton = () => {
       console.log(error);
     }
   }
+
   return (
     <div>
-      {status == true ? (
+      {status ? (
         <>
           <p>퇴실 등록</p>
           <Button className="dark" onClick={Leave}>

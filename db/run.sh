@@ -1,5 +1,8 @@
 #!/bin/bash
 
+### kijungle <kijung982@gmail.com> 
+### Ki Jung Lee ### kj2 ###
+
 if docker ps -a | grep -q "mysql"; then
     docker stop mysql
     docker rm mysql

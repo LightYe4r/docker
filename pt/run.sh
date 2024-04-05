@@ -3,14 +3,36 @@
 ### kijungle <kijung982@gmail.com> 
 ### Ki Jung Lee ### kj2 ###
 
+cd ../
+
 front_net="frontend"
 back_net="backend"
 database_image="kijung2/docker-mysql:latest"
-backend_image="docker-flask:latest"
-haproxy_image="haproxy-test:1.0"
-frontend_image="frontend-test:1.0"
-nginx_image="test-nginx-proxy:1.0"
+backend_image="seonxx/docker-flask:latest"
+haproxy_image="kijung2/docker-run-haproxy:latest"
+frontend_image="jae10/docker-nextjs:latest"
+nginx_image="kijung2/docker-run-nginx:latest"
 database_ip="172.31.1.100"
+api_endpoint="http://192.168.56.101:80"
+
+### NETWORK ###
+if ! docker network ls | grep -q ${front_net}; then
+    docker network create \
+    --driver=bridge \
+    --subnet=172.30.1.0/24 \
+    --ip-range=172.30.1.0/24 \
+    --gateway=172.30.1.1 \
+    ${front_net}
+fi
+
+if ! docker network ls | grep -q ${back_net}; then
+    docker network create \
+    --driver=bridge \
+    --subnet=172.31.1.0/24 \
+    --ip-range=172.31.1.0/24 \
+    --gateway=172.31.1.1 \
+    ${backn_net}
+fi
 
 ### DATABASE-MYSQL ###
 if docker ps -a | grep -q "docker-db"; then
@@ -18,7 +40,7 @@ if docker ps -a | grep -q "docker-db"; then
     docker rm docker-db
 fi
 
-docker run -itd --name docker-db \
+docker run -d --name docker-db \
 --restart=always \
 --network=${back_net} \
 --ip ${database_ip} \
@@ -34,24 +56,21 @@ if docker ps -a | grep -q "docker-backend"; then
     docker rm docker-backend-3
 fi
 
-docker run -itd --name docker-backend-1 \
+docker run -d --name docker-backend-1 \
 --restart=always \
 --network=${back_net} \
 -e MYSQL_HOST=${database_ip} \
 ${backend_image}
-# -p 5001:5000 \
 
-docker run -itd --name docker-backend-2 \
+docker run -d --name docker-backend-2 \
 --restart=always \
 --network=${back_net} \
 ${backend_image}
-# -p 5001:5000 \
 
-docker run -itd --name docker-backend-3 \
+docker run -d --name docker-backend-3 \
 --restart=always \
 --network=${back_net} \
 ${backend_image}
-# -p 5001:5000 \
 
 ### HAPROXY ###
 if docker ps -a | grep -q "docker-haproxy"; then
@@ -59,11 +78,10 @@ if docker ps -a | grep -q "docker-haproxy"; then
     docker rm docker-haproxy
 fi
 
-docker run -itd --name docker-haproxy \
+docker run -d --name docker-haproxy \
 --restart=always \
 --network=${front_net} \
 --network=${back_net} \
--p 8080:8080 \
 ${haproxy_image}
 
 
@@ -77,23 +95,24 @@ if docker ps -a | grep -q "docker-frontend"; then
     docker rm docker-frontend-3
 fi
 
-docker run -itd --name docker-frontend-1 \
+docker run -d --name docker-frontend-1 \
 --restart=always \
 --network=${front_net} \
+-e NEXT_PUBLIC_API_URL=${api_endpoint} \
 ${frontend_image}
-# -p 3001:80 \
 
-docker run -itd --name docker-frontend-2 \
---restart=always \
---network=${front_net} \
-${frontend_image}
-# -p 3002:80
 
-docker run -itd --name docker-frontend-3 \
+docker run -d --name docker-frontend-2 \
 --restart=always \
 --network=${front_net} \
+-e NEXT_PUBLIC_API_URL=${api_endpoint} \
 ${frontend_image}
-# -p 3003:80
+
+docker run -d --name docker-frontend-3 \
+--restart=always \
+--network=${front_net} \
+-e NEXT_PUBLIC_API_URL=${api_endpoint} \
+${frontend_image}
 
 ### NGINX ###
 if docker ps -a | grep -q "docker-nginx"; then
@@ -101,7 +120,7 @@ if docker ps -a | grep -q "docker-nginx"; then
     docker rm docker-nginx
 fi
 
-docker run -itd --name docker-nginx \
+docker run -d --name docker-nginx \
 --restart=always \
 --network=${front_net} \
 -p 80:80 \

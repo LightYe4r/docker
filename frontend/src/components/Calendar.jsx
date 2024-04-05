@@ -1,5 +1,3 @@
-// pages/index.js or components/Calendar.js
-
 import { useEffect, useState } from "react";
 import { Button, Chip } from "@nextui-org/react";
 
@@ -24,9 +22,44 @@ const Calendar = () => {
   const [year, setYear] = useState(new Date().getFullYear());
   const [noOfDays, setNoOfDays] = useState([]);
   const [blankDays, setBlankDays] = useState([]);
+  const [username, setUsername] = useState("");
+  const [userid, setUserid] = useState("");
 
-  const username = localStorage.getItem("name");
-  const userid = localStorage.getItem("id");
+  useEffect(() => {
+    setUsername(localStorage.getItem("name"));
+    setUserid(localStorage.getItem("id"));
+
+    const getNoOfDays = async () => {
+      let daysInMonth = new Date(year, month + 1, 0).getDate();
+      let dayOfWeek = new Date(year, month).getDay();
+      let blankdaysArray = [];
+      let attendInfo = await getAttendInfo(month);
+      for (let i = 1; i <= dayOfWeek; i++) {
+        blankdaysArray.push(i);
+      }
+
+      let daysArray = [];
+      for (let i = 1; i <= daysInMonth; i++) {
+        daysArray.push(i);
+      }
+
+      setBlankDays(blankdaysArray);
+      console.log(attendInfo);
+      // Create a map for easy access to attendance status
+      const attendanceMap = new Map();
+      attendInfo.forEach((info) => attendanceMap.set(info.날짜, info.status));
+      console.log(attendanceMap);
+      // Combine daysArray with attendance status
+      const combinedArray = daysArray.map((day) => ({
+        날짜: day,
+        status: attendanceMap.has(day) ? attendanceMap.get(day) : "",
+      }));
+      setNoOfDays(combinedArray);
+      console.log(combinedArray);
+    };
+
+    getNoOfDays();
+  }, [month, year]);
 
   async function getAttendInfo(month) {
     const userInfo = {
@@ -46,42 +79,14 @@ const Calendar = () => {
         }
       );
       if (res.ok) {
-        const aInfo = await res.json();
-        return aInfo;
+        return await res.json();
       }
+      return [];
     } catch (error) {
       console.log(error);
+      return [];
     }
   }
-
-  const getNoOfDays = async () => {
-    let daysInMonth = new Date(year, month + 1, 0).getDate();
-    let dayOfWeek = new Date(year, month).getDay();
-    let blankdaysArray = [];
-    let attendInfo = await getAttendInfo(month);
-    for (let i = 1; i <= dayOfWeek; i++) {
-      blankdaysArray.push(i);
-    }
-
-    let daysArray = [];
-    for (let i = 1; i <= daysInMonth; i++) {
-      daysArray.push(i);
-    }
-
-    setBlankDays(blankdaysArray);
-    console.log(attendInfo);
-    // // Create a map for easy access to attendance status
-    const attendanceMap = new Map();
-    attendInfo.forEach((info) => attendanceMap.set(info.날짜, info.status));
-    console.log(attendanceMap);
-    // Combine daysArray with attendance status
-    const combinedArray = daysArray.map((day) => ({
-      날짜: day,
-      status: attendanceMap.has(day) ? attendanceMap.get(day) : "",
-    }));
-    setNoOfDays(combinedArray);
-    console.log(combinedArray);
-  };
 
   function getColor(status) {
     if (status == "출석") {
@@ -93,10 +98,6 @@ const Calendar = () => {
     }
   }
 
-  useEffect(() => {
-    getNoOfDays();
-  }, [month, year]);
-
   function prevMonth() {
     if (month === 0) {
       setMonth(11);
@@ -107,7 +108,6 @@ const Calendar = () => {
   }
 
   function nextMonth() {
-    console.log(month);
     if (month === 11) {
       setMonth(0);
       setYear(year + 1);
@@ -117,7 +117,7 @@ const Calendar = () => {
   }
 
   return (
-    <div className="antialiased sans-serif  h-screen">
+    <div className="antialiased sans-serif h-screen">
       <div className="container mx-auto px-8 py-2 md:py-10">
         <div className="bg-white rounded-lg shadow overflow-hidden">
           <div className="flex items-center justify-between py-2 px-6">
