@@ -10,10 +10,9 @@ back_net="backend"
 database_image="kijung2/docker-mysql:latest"
 backend_image="seonxx/docker-flask:latest"
 haproxy_image="kijung2/docker-run-haproxy:latest"
-frontend_image="jae10/docker-nextjs:latest"
+frontend_image="kijung2/docker-nextjs:latest"
 nginx_image="kijung2/docker-run-nginx:latest"
 database_ip="172.31.1.100"
-api_endpoint="http://192.168.56.101:80"
 
 ### NETWORK ###
 if ! docker network ls | grep -q ${front_net}; then
@@ -65,11 +64,13 @@ ${backend_image}
 docker run -d --name docker-backend-2 \
 --restart=always \
 --network=${back_net} \
+-e MYSQL_HOST=${database_ip} \
 ${backend_image}
 
 docker run -d --name docker-backend-3 \
 --restart=always \
 --network=${back_net} \
+-e MYSQL_HOST=${database_ip} \
 ${backend_image}
 
 ### HAPROXY ###
@@ -98,20 +99,17 @@ fi
 docker run -d --name docker-frontend-1 \
 --restart=always \
 --network=${front_net} \
--e NEXT_PUBLIC_API_URL=${api_endpoint} \
 ${frontend_image}
 
 
 docker run -d --name docker-frontend-2 \
 --restart=always \
 --network=${front_net} \
--e NEXT_PUBLIC_API_URL=${api_endpoint} \
 ${frontend_image}
 
 docker run -d --name docker-frontend-3 \
 --restart=always \
 --network=${front_net} \
--e NEXT_PUBLIC_API_URL=${api_endpoint} \
 ${frontend_image}
 
 ### NGINX ###

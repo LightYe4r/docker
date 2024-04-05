@@ -24,7 +24,7 @@ services:
       - frontend
   
   frontend:
-    image: jae10/docker-nextjs:latest
+    image: kijung2/docker-nextjs:latest
     networks:
       - front_net
     restart: always
@@ -33,8 +33,6 @@ services:
       mode: replicated
     depends_on:
       - back-proxy
-    environment:
-      - NEXT_PUBLIC_API_URL=http://192.168.56.101:80
 
   back-proxy:
     image: kijung2/docker-compose-haproxy:latest
