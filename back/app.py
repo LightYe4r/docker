@@ -36,12 +36,11 @@ MYSQL_HOST = os.environ.get('MYSQL_HOST')
 # Python이 실행될 때까지 대기
 while True:
     try:
-        # db = pymysql.connect(host='192.168.56.101', # PUSH할때 MYSQL_HOST로 바꾸기
-        #                      user='root',
-        #                      password='docker',
-        #                      db='docker',
-        #                      cursorclass=pymysql.cursors.DictCursor)
-        db = POOL.connection()
+        db = pymysql.connect(host=MYSQL_HOST, # PUSH할때 MYSQL_HOST로 바꾸기
+                             user='root',
+                             password='docker',
+                             db='docker',
+                             cursorclass=pymysql.cursors.DictCursor)
         break
     except pymysql.err.OperationalError as e:
         print(e)

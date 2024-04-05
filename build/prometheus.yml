@@ -1,0 +1,43 @@
+# global:
+#   scrape_interval:     5s
+#   evaluation_interval: 5s
+
+# scrape_configs:
+#   - job_name: node-exporter
+#     metrics_path: /metrics
+#     static_configs:
+#       - targets:
+#         - 192.168.56.101:19100
+#         - 192.168.56.101:19101
+#         - 192.168.56.101:19102
+#         - 192.168.56.101:19103
+#         - 192.168.56.101:19104
+#   - job_name: cadvisor
+#     static_configs:
+#       - targets:
+#         - 
+
+
+global:
+  scrape_interval:     15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['prometheus:9090']
+
+  - job_name: 'cadvisor'
+    dns_sd_configs:
+    - names:
+      - 'tasks.cadvisor'
+      type: 'A'
+      port: 8080
+
+  - job_name: 'node-exporter'
+    dns_sd_configs:
+    - names:
+      - 'tasks.node-exporter'
+      type: 'A'
+      port: 9100
+  
