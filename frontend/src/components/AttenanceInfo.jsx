@@ -8,17 +8,19 @@ import {
   TableRow,
   TableCell,
 } from "@nextui-org/react";
+
 const AttenanceInfo = () => {
   const [attendInfo, setAttendInfo] = useState({});
   const [id, setId] = useState(0);
   const [name, setName] = useState("");
 
   useEffect(() => {
+    const username = localStorage.getItem("name");
+    const userid = localStorage.getItem("id");
+    setId(userid);
+    setName(username);
+
     async function getAttendInfo() {
-      let username = localStorage.getItem("name");
-      let userid = localStorage.getItem("id");
-      setId(userid);
-      setName(username);
       const userInfo = {
         id: userid,
         name: username,
