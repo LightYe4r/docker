@@ -26,7 +26,7 @@ services:
       - '--path.sysfs=/host/sys'
       - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
     ports:
-      - 19100-19104:9100
+      - 19100:9100
     deploy:
       mode: global
     networks:
