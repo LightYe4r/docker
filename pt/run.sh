@@ -1,4 +1,8 @@
 #!/bin/bash
+
+### kijungle <kijung982@gmail.com> 
+### Ki Jung Lee ### kj2 ###
+
 cd ../
 
 front_net="frontend"

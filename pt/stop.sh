@@ -1,5 +1,8 @@
 #!/bin/bash
 
+### kijungle <kijung982@gmail.com> 
+### Ki Jung Lee ### kj2 ###
+
 front_net="frontend"
 back_net="backend"
 docker stop docker-db
