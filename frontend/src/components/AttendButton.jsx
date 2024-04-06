@@ -96,16 +96,12 @@ const AttendButton = () => {
       {status ? (
         <>
           <p>퇴실 등록</p>
-          <Button className="dark" onClick={Leave}>
-            퇴실
-          </Button>
+          <Button onClick={Leave}>퇴실</Button>
         </>
       ) : (
         <>
           <p>입실 등록</p>
-          <Button className="dark" onClick={Attend}>
-            입실
-          </Button>
+          <Button onClick={Attend}>입실</Button>
         </>
       )}
     </div>

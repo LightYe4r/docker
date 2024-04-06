@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
 import { Button, Chip } from "@nextui-org/react";
+import { UserContext } from "@/app/providers";
 
 const MONTH_NAMES = [
   "January",
@@ -22,13 +23,9 @@ const Calendar = () => {
   const [year, setYear] = useState(new Date().getFullYear());
   const [noOfDays, setNoOfDays] = useState([]);
   const [blankDays, setBlankDays] = useState([]);
-  const [username, setUsername] = useState("");
-  const [userid, setUserid] = useState("");
+  const { user } = useContext(UserContext);
 
   useEffect(() => {
-    setUsername(localStorage.getItem("name"));
-    setUserid(localStorage.getItem("id"));
-
     const getNoOfDays = async () => {
       let daysInMonth = new Date(year, month + 1, 0).getDate();
       let dayOfWeek = new Date(year, month).getDay();
@@ -62,9 +59,12 @@ const Calendar = () => {
   }, [month, year]);
 
   async function getAttendInfo(month) {
+    let id = localStorage.getItem("id");
+    let name = localStorage.getItem("name");
+
     const userInfo = {
-      id: userid,
-      name: username,
+      id: id,
+      name: name,
       month: month + 1,
     };
     try {

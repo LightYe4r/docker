@@ -8,14 +8,16 @@ import {
   Divider,
   Button,
 } from "@nextui-org/react";
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { useRouter } from "next/navigation";
+import { UserContext } from "./providers";
 
 export default function Home() {
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
   const router = useRouter();
+  const { setUser } = useContext(UserContext);
 
   async function handleSubmit() {
     const formData = new FormData();
@@ -35,6 +37,7 @@ export default function Home() {
         localStorage.setItem("id", data.id);
         localStorage.setItem("name", data.name);
         // 로그인 성공 시, attendance 페이지로 이동
+        setUser({ id: data.id, name: data.name });
         router.push("/checkin");
       } else {
         setMessage(data.message);
@@ -69,7 +72,7 @@ export default function Home() {
         </CardBody>
         <Divider />
         <CardFooter className="flex flex-col gap-4">
-          <Button className="w-full" onClick={handleSubmit}>
+          <Button type="submit" className="w-full" onClick={handleSubmit}>
             로그인
           </Button>
           {message && <p>{message}</p>}

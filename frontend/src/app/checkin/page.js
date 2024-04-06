@@ -1,24 +1,19 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import Calendar from "@/components/Calendar";
 import AttenanceInfo from "@/components/AttenanceInfo";
 import AttendButton from "@/components/AttendButton";
 import { Button } from "@nextui-org/react";
 import { useRouter } from "next/navigation";
-
+import { UserContext } from "../providers";
 const page = () => {
-  const [name, setName] = useState("");
-  const [id, setId] = useState(null);
   const router = useRouter();
+  const { user, setUser } = useContext(UserContext);
 
   useEffect(() => {
-    let username = localStorage.getItem("name");
-    let userid = localStorage.getItem("id");
-    if (username == null) {
-      router.push("/");
-    }
-    setName(username);
-    setId(userid);
+    let id = localStorage.getItem("id");
+    let name = localStorage.getItem("name");
+    if (id & name) setUser({ id: id, name: name });
   }, []);
 
   function Logout() {
@@ -30,7 +25,7 @@ const page = () => {
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
       <div className="flex flex-col gap-3">
-        <p className="text-xl font-bold">반갑습니다 {name}님</p>
+        <p className="text-xl font-bold">반갑습니다 {user.name}님</p>
 
         <AttenanceInfo />
         <AttendButton />
