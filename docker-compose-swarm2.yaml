@@ -10,23 +10,13 @@ networks:
     ipam:
       config:
         - subnet: "172.30.2.0/24"
+  monitoring:
+    driver: overlay
+    ipam:
+      config:
+        - subnet: "172.30.3.0/24"
 
 services:
-  # front-proxy:
-  #   image: nginx:1.25.4-alpine
-  #   volumes:
-  #     - ./build/front-proxy.conf:/etc/nginx/nginx.conf
-  #   command: ["nginx", "-g", "daemon off;"]
-  #   networks:
-  #     - front
-  #   ports:
-  #     - "80:80"
-  #   restart: always
-  #   deploy:
-  #     placement:
-  #       constraints:
-  #         - node.role == manager
-
   frontend:
     image: dbgurum/guestbook:frontend_1.0
     networks:
@@ -42,26 +32,6 @@ services:
     environment:
       - GUESTBOOK_API_ADDR=backend:8080
       - PORT=80
-
-  # back-proxy:
-  #   # build:
-  #   #   context: .
-  #   #   dockerfile: build/Dockerfile-b-proxy
-  #   image: manji955/project-back-proxy:1.0
-  #   networks:
-  #     - back
-  #     - front
-  #   ports:
-  #     - "8080:8080"
-  #   restart: always
-  #   deploy:
-  #     placement:
-  #       constraints:
-  #         - node.role == manager
-  #   volumes:
-  #     - ./build/haproxy.cfg:/etc/haproxy/haproxy.cfg
-  #     - ./build/keepalived.conf:/etc/keepalived/keepalived.conf
-  #   command: ["sh", "-c", "haproxy -f /etc/haproxy/haproxy.cfg -d && keepalived -f /etc/keepalived/keepalived.conf -d"]
 
   backend:
     image: dbgurum/guestbook:backend_1.0
@@ -90,3 +60,63 @@ services:
       placement:
         constraints:
           - node.role == manager
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    deploy:
+      mode: global
+    networks:
+      - monitoring
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    ports:
+      - 9100:9100
+    deploy:
+      mode: global
+    networks:
+      - monitoring
+
+  prometheus:
+    image: prom/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - monitoring
+    volumes:
+      - ./build/prometheus.yml:/etc/prometheus/prometheus.yml
+    environment:
+      - config.file=/etc/prometheus/prometheus.yml
+      - storage.local.path=/prometheus
+      - web.console.libraries=/etc/prometheus/console_libraries
+      - web.console.templates=/etc/prometheus/consoles
+    depends_on:
+      - cadvisor
+      - node-exporter
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3000:3000"
+    networks:
+      - monitoring
+    environment:
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_SECURITY_ADMIN_PASSWORD=pass123#
+    depends_on:
+      - prometheus

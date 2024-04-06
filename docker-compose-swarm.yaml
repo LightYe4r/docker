@@ -1,11 +1,11 @@
 networks:
-  front:
+  front_net:
     driver: overlay
     ipam:
       config:
         - subnet: "172.30.1.0/24"
 
-  back:
+  back_net:
     driver: overlay
     ipam:
       config:
@@ -18,59 +18,111 @@ networks:
         - subnet: "172.30.3.0/24"
 
 services:
+  # front-proxy:
+  #   image: manji955/front-proxy
+  #   networks:
+  #     - front
+  #   ports:
+  #     - "80:80"
+
+  # frontend:
+  #   image: dbgurum/guestbook:frontend_1.0
+  #   networks:
+  #     - front
+  #   ports:
+  #     - "3001-3003:80"
+  #   deploy:
+  #     replicas: 1
+  #     mode: replicated
+  #     placement:
+  #       constraints:
+  #         - node.role == worker
+  #   environment:
+  #     - GUESTBOOK_API_ADDR=back-proxy:8080
+  #     - PORT=80
+
+  # back-proxy:
+  #   image: manji955/back-proxy
+  #   networks:
+  #     - back
+  #     - front
+  #   ports:
+  #     - "8080:8080"
+
+  # backend:
+  #   image: dbgurum/guestbook:backend_1.0
+  #   networks:
+  #     - back
+  #   ports:
+  #     - "5001-5003:8000"
+  #   deploy:
+  #     replicas: 1
+  #     mode: replicated
+  #     placement:
+  #       constraints:
+  #         - node.role == worker
+  #   environment:
+  #     - PORT=8000
+  #     - GUESTBOOK_DB_ADDR=db:27017
+
+  # db:
+  #   image: mongo:4
+  #   networks:
+  #     - back
+  #   ports:
+  #     - "17017:27017"
   front-proxy:
-    image: manji955/front-proxy
+    image: kijung2/docker-compose-nginx:latest
+    container_name: docker-nginx
     networks:
-      - front
+      - front_net
+    restart: always
     ports:
       - "80:80"
-
+    depends_on:
+      - frontend
+  
   frontend:
-    image: dbgurum/guestbook:frontend_1.0
+    image: kijung2/docker-nextjs:latest
     networks:
-      - front
-    ports:
-      - "3001-3003:80"
+      - front_net
+    restart: always
     deploy:
-      replicas: 1
+      replicas: 3
       mode: replicated
-      placement:
-        constraints:
-          - node.role == worker
-    environment:
-      - GUESTBOOK_API_ADDR=back-proxy:8080
-      - PORT=80
+    depends_on:
+      - back-proxy
 
   back-proxy:
-    image: manji955/back-proxy
+    image: kijung2/docker-compose-haproxy:latest
+    container_name: docker-haproxy
     networks:
-      - back
-      - front
-    ports:
-      - "8080:8080"
-
+      - front_net
+      - back_net
+    restart: always
+    depends_on:
+      - backend
+    
   backend:
-    image: dbgurum/guestbook:backend_1.0
+    image: seonxx/docker-flask:latest
     networks:
-      - back
-    ports:
-      - "5001-5003:8000"
+      - back_net
+    restart: always
     deploy:
-      replicas: 1
+      replicas: 3
       mode: replicated
-      placement:
-        constraints:
-          - node.role == worker
+    depends_on:
+      - database
     environment:
-      - PORT=8000
-      - GUESTBOOK_DB_ADDR=db:27017
-
-  db:
-    image: mongo:4
+      - MYSQL_HOST=database
+    
+  database:
+    image: kijung2/docker-mysql:latest
+    container_name: docker-db
     networks:
-      - back
-    ports:
-      - "17017:27017"
+      - back_net
+    restart: always
+
 
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:latest
