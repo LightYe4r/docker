@@ -105,7 +105,7 @@ services:
     networks:
       - monitoring
     volumes:
-      - ./build/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./build/prometheus-stack.yml:/etc/prometheus/prometheus.yml
     environment:
       - config.file=/etc/prometheus/prometheus.yml
       - storage.local.path=/prometheus
