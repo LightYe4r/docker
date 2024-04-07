@@ -1,0 +1,155 @@
+{
+    "dashboard": {
+      "id": null,
+      "uid": null,
+      "title": "Docker Metrics",
+      "timezone": "browser",
+      "schemaVersion": 27,
+      "version": 0
+    },
+    "refresh": "10s",
+    "panels": [
+      {
+        "id": 1,
+        "gridPos": {
+          "x": 0,
+          "y": 0,
+          "w": 6,
+          "h": 6
+        },
+        "type": "graph",
+        "title": "CPU Usage",
+        "datasource": "prometheus",
+        "targets": [
+          {
+            "expr": "sum(rate(container_cpu_usage_seconds_total{}[1m])) by (container_label_com_docker_compose_service)",
+            "legendFormat": "{{container_label_com_docker_compose_service}}",
+            "interval": "10s"
+          }
+        ],
+        "xaxis": {
+          "show": true
+        },
+        "yaxes": [
+          {
+            "format": "short",
+            "show": true
+          },
+          {
+            "format": "short",
+            "show": true
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "gridPos": {
+          "x": 6,
+          "y": 0,
+          "w": 6,
+          "h": 6
+        },
+        "type": "graph",
+        "title": "Memory Usage",
+        "datasource": "prometheus",
+        "targets": [
+          {
+            "expr": "sum(container_memory_usage_bytes{}) by (container_label_com_docker_compose_service)",
+            "legendFormat": "{{container_label_com_docker_compose_service}}",
+            "interval": "10s"
+          }
+        ],
+        "xaxis": {
+          "show": true
+        },
+        "yaxes": [
+          {
+            "format": "short",
+            "show": true
+          },
+          {
+            "format": "short",
+            "show": true
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "gridPos": {
+          "x": 0,
+          "y": 6,
+          "w": 12,
+          "h": 6
+        },
+        "type": "graph",
+        "title": "Network Traffic",
+        "datasource": "prometheus",
+        "targets": [
+          {
+            "expr": "sum(rate(container_network_transmit_bytes_total{}[1m])) by (container_label_com_docker_compose_service)",
+            "legendFormat": "{{container_label_com_docker_compose_service}} transmit",
+            "interval": "10s"
+          },
+          {
+            "expr": "sum(rate(container_network_receive_bytes_total{}[1m])) by (container_label_com_docker_compose_service)",
+            "legendFormat": "{{container_label_com_docker_compose_service}} receive",
+            "interval": "10s"
+          }
+        ],
+        "xaxis": {
+          "show": true
+        },
+        "yaxes": [
+          {
+            "format": "short",
+            "show": true
+          },
+          {
+            "format": "short",
+            "show": true
+          }
+        ]
+      }
+    ],
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "annotations": {
+      "list": [],
+      "enable": false
+    },
+    "hideControls": false,
+    "sharedCrosshair": false,
+    "rows": [],
+    "timepicker": {
+      "now": true,
+      "refresh_intervals": [
+        "5s",
+        "10s",
+        "30s",
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h",
+        "2h",
+        "1d"
+      ],
+      "time_options": [
+        "5m",
+        "15m",
+        "1h",
+        "6h",
+        "12h",
+        "24h",
+        "2d",
+        "7d",
+        "30d"
+      ]
+    },
+    "templating": {
+      "list": []
+    }
+  }
+  
