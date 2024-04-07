@@ -38,7 +38,7 @@ export default function Home() {
         localStorage.setItem("name", data.name);
         // 로그인 성공 시, attendance 페이지로 이동
         setUser({ id: data.id, name: data.name });
-        router.push("/checkin");
+        router.push("/check");
       } else {
         setMessage(data.message);
       }
