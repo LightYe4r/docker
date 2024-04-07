@@ -175,7 +175,7 @@ def checkstatus():
                             return jsonify({'message': '출석 기록이 있습니다.', 'status': status}), 200
                         else:
                             status = False
-                            return jsonify({'message': '출석 기록이 없습니다.', 'status': status}), 404
+                            return jsonify({'message': '출석 기록이 없습니다.', 'status': status}), 200
                     except Exception as e:
                         return jsonify({'error': str(e)}), 500
                 else:
@@ -247,7 +247,7 @@ def get_attendance():
                         if result:
                             return jsonify(result), 200
                         else:
-                            return jsonify({'지각': 0, '조퇴': 0, '출석': 0, '결석': 0}), 404
+                            return jsonify({'지각': 0, '조퇴': 0, '출석': 0, '결석': 0}), 200
                     except Exception as e:
                         return jsonify({'error': str(e)}), 500
                 else:
@@ -318,7 +318,7 @@ def get_attendance_by_date():
                 if result:
                     return jsonify(result), 200
                 else:
-                    return jsonify({'message': '해당 날짜에 대한 출결 기록이 없습니다.'}), 404
+                    return jsonify({'message': '해당 날짜에 대한 출결 기록이 없습니다.'}), 200
             else:
                 return jsonify({'message': '사용자를 찾을 수 없습니다.'}), 404
         else:
@@ -402,7 +402,7 @@ def get_attendance_by_month():
 
                         return jsonify(new_result), 200
                     else:
-                        return jsonify({'message': '해당 월에 대한 출결 기록이 없습니다.'}), 404
+                        return jsonify({'message': '해당 월에 대한 출결 기록이 없습니다.'}), 200
                 else:
                     return jsonify({'message': '사용자를 찾을 수 없습니다.'}), 404
             except Exception as e:
