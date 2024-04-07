@@ -50,7 +50,7 @@ const AttendButton = () => {
     };
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/check`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/checkin`, {
         method: "POST",
         body: JSON.stringify(userInfo),
         headers: {
