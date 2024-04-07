@@ -38,8 +38,8 @@ services:
         constraints:
           - node.role == worker
 
-  back-proxy:
-  # docker-haproxy:
+  # back-proxy:
+  docker-haproxy:
     # image: kijung2/haproxy-test:1.0
     image: kijung2/docker-compose-haproxy:latest
     networks:
